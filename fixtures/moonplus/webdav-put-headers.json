@@ -1,0 +1,10 @@
+{
+  "method": "PUT",
+  "path": "/dav/moonreader/Test_Book.po",
+  "headers": {
+    "Content-Type": "application/octet-stream",
+    "User-Agent": "Moon+ Reader",
+    "Content-Length": "128"
+  },
+  "notes": "Moon+ sends PUT with raw binary .po body. No If-Match or If-None-Match headers."
+}

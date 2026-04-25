@@ -1,0 +1,10 @@
+{
+  "Goodreads Sync": {
+    "progress_column": "#reading_progress",
+    "reading_list_column": "tags",
+    "rating_column": "rating",
+    "sync_rating": true,
+    "sync_shelves": true,
+    "sync_reading_progress": false
+  }
+}

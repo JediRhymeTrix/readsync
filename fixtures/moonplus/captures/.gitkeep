@@ -1,0 +1,3 @@
+# This directory holds real Moon+ Pro .po captures from a physical device.
+# Run: cd tools/moon-fixture-recorder && go run . --port 8765
+# Then follow docs/research/moonplus.md section 5 capture script.

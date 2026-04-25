@@ -1,0 +1,5 @@
+#readsync_progress (int) - Reading Progress
+#readsync_position (text) - Sync Position
+#readsync_device (text) - Sync Device
+#readsync_synced (datetime) - Sync Timestamp
+#readsync_gr_shelf (text) - Goodreads Shelf

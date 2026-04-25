@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "title": "Minimal Test Book",
+    "authors": "Test Author",
+    "identifiers": "goodreads:12345,isbn:9780000000001",
+    "#readsync_progress": 47,
+    "#readsync_position": "epubcfi(/6/4[chap03]!/4/2/12:350)",
+    "#readsync_device": "KOReader",
+    "#readsync_synced": "2026-04-25T14:00:00+00:00",
+    "#readsync_gr_shelf": "currently-reading"
+  },
+  {
+    "id": 2,
+    "title": "Short Story Collection",
+    "authors": "Another Author",
+    "identifiers": "isbn:9780000000002",
+    "#readsync_progress": 0,
+    "#readsync_position": "",
+    "#readsync_device": "",
+    "#readsync_synced": null,
+    "#readsync_gr_shelf": "to-read"
+  },
+  {
+    "id": 3,
+    "title": "Bare Book (No Identifiers)",
+    "authors": "Unknown Author",
+    "identifiers": "",
+    "#readsync_progress": 100,
+    "#readsync_position": "",
+    "#readsync_device": "Moon+ Reader",
+    "#readsync_synced": "2026-04-25T10:00:00+00:00",
+    "#readsync_gr_shelf": "read"
+  }
+]

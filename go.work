@@ -1,0 +1,8 @@
+go 1.22
+
+use (
+	./tools/koreader-sim
+	./tools/moon-fixture-recorder
+	./tools/winsvc-spike
+	./tools/generate-fixtures
+)

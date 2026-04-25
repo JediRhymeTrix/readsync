@@ -1,0 +1,10 @@
+{
+  "calibre_book_id": 1,
+  "title": "Test Book",
+  "custom_columns": {
+    "#readsync_progress": 100,
+    "#readsync_gr_shelf": "read",
+    "#readsync_device": "KOReader",
+    "#readsync_synced": "2026-04-25T16:00:00+00:00"
+  }
+}

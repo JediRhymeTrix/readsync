@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid_id" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"
+            xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:title>Bare Book (No Identifiers)</dc:title>
+    <dc:creator opf:role="aut">Unknown Author</dc:creator>
+    <dc:identifier id="calibre_id">3</dc:identifier>
+    <dc:language>en</dc:language>
+    <meta name="calibre:user_metadata:#readsync_progress" content="{&quot;#value#&quot;: 100, &quot;datatype&quot;: &quot;int&quot;, &quot;#extra#&quot;: null}"/>
+    <meta name="calibre:user_metadata:#readsync_device" content="{&quot;#value#&quot;: &quot;Moon+ Reader&quot;, &quot;datatype&quot;: &quot;text&quot;, &quot;#extra#&quot;: null}"/>
+    <meta name="calibre:user_metadata:#readsync_gr_shelf" content="{&quot;#value#&quot;: &quot;read&quot;, &quot;datatype&quot;: &quot;text&quot;, &quot;#extra#&quot;: null}"/>
+  </metadata>
+</package>

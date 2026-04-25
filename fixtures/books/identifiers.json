@@ -1,0 +1,32 @@
+[
+  {
+    "calibre_id": 1,
+    "title": "Minimal Test Book",
+    "author": "Test Author",
+    "isbn": "9780000000001",
+    "goodreads_id": "12345",
+    "sha256": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    "file": "books/minimal.epub",
+    "notes": "SHA256 is a placeholder; real hash computed from actual EPUB binary"
+  },
+  {
+    "calibre_id": 2,
+    "title": "Short Story Collection",
+    "author": "Another Author",
+    "isbn": "9780000000002",
+    "goodreads_id": "",
+    "sha256": "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+    "file": "books/short-story.epub",
+    "notes": "No Goodreads ID — book not linked to GR"
+  },
+  {
+    "calibre_id": 3,
+    "title": "Bare Book (No Identifiers)",
+    "author": "Unknown Author",
+    "isbn": "",
+    "goodreads_id": "",
+    "sha256": "1111222233334444111122223333444411112222333344441111222233334444",
+    "file": "books/minimal-v2.epub",
+    "notes": "No external identifiers — filename-based matching only"
+  }
+]
