@@ -1,0 +1,97 @@
+name: ReadSync CI
+
+on:
+  push:
+    branches: [main, "phase*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Phase 0 tools ────────────────────────────────────────────────────────
+  tools:
+    name: Phase 0 tools
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: false
+
+      - name: Vet Phase 0 tools (CGO disabled, pure Go)
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          (cd tools/koreader-sim          && go vet ./...)
+          (cd tools/moon-fixture-recorder && go vet ./...)
+          (cd tools/winsvc-spike          && go vet ./...)
+          (cd tools/generate-fixtures     && go vet ./...)
+
+  # ─── Phase 1 main module ──────────────────────────────────────────────────
+  unit-tests:
+    name: Phase 1 unit tests (no CGO)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+      - name: Run pure unit tests
+        # resolver, conflicts, logging don't need sqlite3/CGO
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          go test -v -count=1 -timeout 30s \
+            ./internal/resolver/... \
+            ./internal/conflicts/... \
+            ./internal/logging/...
+
+  integration-tests:
+    name: Phase 1 integration tests (CGO + SQLite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Install GCC (for go-sqlite3 CGO)
+        run: sudo apt-get install -y gcc
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+      - name: Run all tests
+        env:
+          CGO_ENABLED: "1"
+        run: go test -v -count=1 -timeout 60s ./...
+
+  build:
+    name: Build Windows binaries (cross-compile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Install Windows cross-compile toolchain
+        run: sudo apt-get install -y gcc-mingw-w64-x86-64
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+      - name: Build readsync-service.exe
+        env:
+          CGO_ENABLED: "1"
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: go build -v -o bin/readsync-service.exe ./cmd/readsync-service/
+      - name: Build readsyncctl.exe
+        env:
+          CGO_ENABLED: "1"
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: go build -v -o bin/readsyncctl.exe ./cmd/readsyncctl/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: bin/*.exe

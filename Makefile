@@ -60,3 +60,47 @@ clean:
 	rm -f tools/koreader-sim/koreader-sim.exe
 	rm -f tools/moon-fixture-recorder/moon-fixture-recorder.exe
 	rm -f tools/winsvc-spike/readsync-spike.exe
+
+# ─── Phase 1 main module ─────────────────────────────────────────────────────
+# NOTE: go-sqlite3 requires CGO. Install TDM-GCC on Windows:
+#   https://jmeubank.github.io/tdm-gcc/
+# Then: make deps && make test
+
+## deps: Download main module dependencies (run once after checkout)
+deps:
+	go mod tidy
+	go mod download
+
+## vet-phase1: Run go vet on Phase 1 main module
+vet-phase1:
+	go vet ./cmd/... ./internal/...
+
+## test: Run all Phase 1 tests (requires CGO+GCC for go-sqlite3)
+test:
+	go test -v -count=1 -timeout 60s ./...
+
+## test-unit: Run pure unit tests (resolver, conflicts, logging - no CGO)
+test-unit:
+	go test -v -count=1 -timeout 30s \
+	  ./internal/resolver/... \
+	  ./internal/conflicts/... \
+	  ./internal/logging/...
+
+## test-e2e: Run end-to-end pipeline tests (requires CGO)
+test-e2e:
+	go test -v -count=1 -timeout 30s \
+	  -run 'TestPipeline|TestMigrate' ./internal/core/...
+
+## migrate-test: Apply DB migrations to a test database file
+migrate-test:
+	@mkdir -p test-output
+	go run ./cmd/readsyncctl db migrate --db test-output/readsync-test.db
+	@echo "Schema verified at: test-output/readsync-test.db"
+
+## build: Build all Phase 1 binaries (requires CGO)
+build: deps vet-phase1
+	@mkdir -p bin
+	go build -o bin/readsync-service.exe ./cmd/readsync-service/
+	go build -o bin/readsyncctl.exe       ./cmd/readsyncctl/
+	go build -o bin/readsync-tray.exe     ./cmd/readsync-tray/
+
