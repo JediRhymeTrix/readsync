@@ -1,4 +1,4 @@
-// cmd/readsync-service/main_service.go
+﻿// cmd/readsync-service/main_service.go
 //
 // ReadSync Windows Service entry point.
 // This file contains the actual implementation; main.go is left for reference.
@@ -14,10 +14,12 @@ import (
 
 	"github.com/kardianos/service"
 	"github.com/readsync/readsync/internal/adapters/koreader"
+	"github.com/readsync/readsync/internal/adapters/moon"
 	"github.com/readsync/readsync/internal/api"
 	"github.com/readsync/readsync/internal/core"
 	"github.com/readsync/readsync/internal/db"
 	"github.com/readsync/readsync/internal/logging"
+	"github.com/readsync/readsync/internal/secrets"
 )
 
 const (
@@ -79,8 +81,21 @@ func (p *program2) runService2(ctx context.Context) {
 	koreaderAdapter := koreader.New(koreader.DefaultConfig(), database.SQL(), logger)
 	koreaderAdapter.SetPipeline(pipeline)
 	if err := koreaderAdapter.Start(ctx); err != nil {
-		// Non-fatal: log and continue — KOReader sync unavailable but service runs.
+		// Non-fatal: log and continue â€” KOReader sync unavailable but service runs.
 		logger.Error("koreader adapter start failed", logging.F("error", err))
+	}
+	// Start Moon+ Reader Pro adapter (embedded WebDAV server, Phase 4).
+	moonCfg := moon.Defaults()
+	moonCfg.WebDAV.DataDir = filepath.Join(filepath.Dir(dbPath), "moon")
+	moonCfg.WebDAV.BindAddr = "0.0.0.0:8765"
+	moonAdapter, mErr := moon.New(moonCfg, database.SQL(), logger, &secrets.EnvStore{})
+	if mErr != nil {
+		logger.Error("moon adapter init failed", logging.F("error", mErr))
+	} else {
+		moonAdapter.SetPipeline(pipeline)
+		if err := moonAdapter.Start(ctx); err != nil {
+			logger.Error("moon adapter start failed", logging.F("error", err))
+		}
 	}
 
 	logger.Info("ReadSync service ready")

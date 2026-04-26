@@ -1,4 +1,4 @@
-// internal/db/migrations.go
+﻿// internal/db/migrations.go
 //
 // SQL migration definitions for ReadSync's SQLite schema.
 
@@ -17,7 +17,7 @@ var migrations = []migration{
 
 	{version: 1, sql: migration1},
 	{version: 2, sql: migration2},
-
+	{version: 3, sql: migration3},
 }
 
 const migration1 = `
@@ -165,3 +165,31 @@ CREATE TABLE IF NOT EXISTS koreader_devices (
 CREATE INDEX IF NOT EXISTS idx_koreader_devices_user ON koreader_devices(user_id);
 `
 
+
+const migration3 = `
+CREATE TABLE IF NOT EXISTS moon_users (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    username        TEXT    NOT NULL UNIQUE,
+    password_hash   TEXT    NOT NULL,
+    created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS moon_uploads (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL REFERENCES moon_users(id) ON DELETE CASCADE,
+    rel_path        TEXT    NOT NULL,
+    version         INTEGER NOT NULL,
+    received_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    size_bytes      INTEGER NOT NULL,
+    sha256          TEXT    NOT NULL,
+    archive_path    TEXT    NOT NULL,
+    parsed          INTEGER NOT NULL DEFAULT 0,
+    parse_error     TEXT,
+    UNIQUE(user_id, rel_path, version)
+);
+CREATE INDEX IF NOT EXISTS idx_moon_uploads_user_path
+    ON moon_uploads(user_id, rel_path, version DESC);
+CREATE INDEX IF NOT EXISTS idx_moon_uploads_received
+    ON moon_uploads(received_at DESC);
+`
