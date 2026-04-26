@@ -95,3 +95,61 @@ jobs:
         with:
           name: windows-binaries
           path: bin/*.exe
+
+  # ─── Phase 7 QA & Hardening ─────────────────────────────────────────────────
+  phase7-unit:
+    name: Phase 7 unit tests (no CGO)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+      - name: Run Phase 7 unit tests
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          go test -v -count=1 -timeout 60s \
+            ./internal/resolver/... \
+            ./internal/conflicts/... \
+            ./internal/logging/... \
+            ./internal/outbox/... \
+            ./internal/adapters/moon/...
+
+  phase7-security:
+    name: Phase 7 security tests (no CGO)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+      - name: Run security tests
+        env:
+          CGO_ENABLED: "0"
+        run: go test -v -count=1 -timeout 30s ./tests/security/...
+
+  phase7-integration:
+    name: Phase 7 integration tests (CGO)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Install GCC
+        run: sudo apt-get install -y gcc
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+      - name: Run integration + calibre + koreader tests
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          go test -v -count=1 -timeout 60s ./tests/integration/...
+          go test -v -count=1 -timeout 30s ./internal/adapters/calibre/...
+          go test -v -count=1 -timeout 30s ./internal/adapters/koreader/...
+

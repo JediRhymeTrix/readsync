@@ -8,6 +8,62 @@ between KOReader, Moon+ Reader Pro, Calibre, and Goodreads.
 
 ---
 
+## Setup Walkthrough
+
+### Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Windows 10/11 | 64-bit | Service runs as LocalSystem |
+| Calibre | 6+ | Optional but recommended |
+
+### Step 1 — Install
+
+Run `ReadSync-0.7.0-setup.exe` as Administrator. The installer:
+1. Copies binaries to `%ProgramFiles%\ReadSync\`.
+2. Registers `ReadSync` Windows service with auto-start + crash recovery.
+3. Starts the service and launches the system tray icon.
+
+> **Firewall**: An optional task opens ports 7200 (KOReader) and 8765 (Moon+)
+> on the private-network profile only. Leave unchecked unless you need LAN sync.
+
+### Step 2 — Open the Admin UI
+
+The service binds to `http://127.0.0.1:7201/`. Open in any browser;
+you will be redirected to the 10-step setup wizard automatically.
+
+### Step 3 — Configure KOReader
+
+In KOReader: **Settings → KOSync → Custom sync server**
+
+```
+Protocol: http
+Host:     <your-pc-ip>
+Port:     7200
+Username: <from wizard step 5>
+Password: <from wizard step 5>
+```
+
+### Step 4 — Configure Moon+ Pro
+
+In Moon+ Pro: **Settings → Sync Reading → WebDAV Sync**
+
+```
+Server:   http://<your-pc-ip>:8765/moon-webdav/
+Username: <from wizard step 6>
+Password: <from wizard step 6>
+```
+
+### Step 5 — Goodreads (optional, no API key required)
+
+1. Install the Calibre Goodreads Sync plugin.
+2. Set its progress column to `#readsync_progress`.
+3. Select **manual-plugin** or **guided-plugin** mode in the wizard step 4.
+
+
+
+---
+
 ## Repository Structure
 
 ```

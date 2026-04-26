@@ -157,3 +157,31 @@ smoke-installer:
 
 
 
+
+
+# ─── Phase 7 QA & Hardening ──────────────────────────────────────────────────
+
+## test-phase7-unit: Run all Phase 7 unit tests (no CGO required).
+test-phase7-unit:
+	go test -v -count=1 -timeout 60s \
+	  ./internal/resolver/... \
+	  ./internal/conflicts/... \
+	  ./internal/logging/... \
+	  ./internal/outbox/... \
+	  ./internal/adapters/calibre/... \
+	  ./internal/adapters/moon/... \
+	  ./internal/adapters/koreader/...
+
+## test-security: Run security tests (no CGO required).
+test-security:
+	go test -v -count=1 -timeout 30s ./tests/security/...
+
+## test-integration: Run integration tests with fake adapters (CGO required).
+test-integration:
+	CGO_ENABLED=1 go test -v -count=1 -timeout 60s ./tests/integration/...
+
+## test-phase7: Run all Phase 7 tests.
+test-phase7: test-phase7-unit test-security
+	@echo "Phase 7 unit + security tests complete."
+	@echo "Run 'make test-integration' separately (requires CGO/GCC)."
+
