@@ -1,7 +1,49 @@
 # ReadSync
 
+<!-- LLM-SUMMARY: ReadSync is a self-hosted Windows reading-progress sync service. Go 1.22+, SQLite, KOSync + WebDAV adapters for KOReader and Moon+ Pro, Calibre integration, Goodreads bridge via plugin. No API keys needed. -->
+
+[![CI](https://github.com/readsync/readsync/actions/workflows/ci.yml/badge.svg)](https://github.com/readsync/readsync/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/readsync/readsync)](https://github.com/readsync/readsync/releases/latest)
+[![Go 1.22+](https://img.shields.io/badge/go-1.22%2B-blue)](https://golang.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Platform: Windows 10/11](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/readsync/readsync/releases)
+
+**ReadSync** is a self-hosted Windows background service that keeps reading progress in sync across [KOReader](https://koreader.rocks/), [Moon+ Reader Pro](https://play.google.com/store/apps/details?id=com.flyersoft.moonreaderp), [Calibre](https://calibre-ebook.com/), and [Goodreads](https://www.goodreads.com/) — automatically, with no cloud subscription or API key.
+
+| App | Protocol | ReadSync role |
+|-----|----------|---------------|
+| **KOReader** (e-ink, Android) | KOSync HTTP API | Drop-in KOSync server — port 7200 |
+| **Moon+ Reader Pro** (Android) | WebDAV sync (`.po` files) | Embedded WebDAV server — port 8765 |
+| **Calibre** (Windows library) | `calibredb` + OPF | Reads/writes `#readsync_progress` column |
+| **Goodreads** | Calibre Goodreads Sync plugin | Writes `#readsync_progress` for the plugin |
+
+**No Goodreads API key required.** **No cloud dependency.** Everything runs on your local Windows PC.
+
+---
+
+
+## Build from Source
+
+```powershell
+git clone https://github.com/readsync/readsync.git && cd readsync
+go mod tidy && go mod download
+make build              # → bin/readsync-service.exe, bin/readsyncctl.exe, bin/readsync-tray.exe
+make test-unit          # fast pure-Go tests (no CGO)
+make test               # full suite (CGO required — install TDM-GCC first)
+```
+
+Or download the pre-built installer from [Releases](https://github.com/readsync/readsync/releases/latest) and run as Administrator.
+
+---
+
+
+
+
+
 **Windows reading-progress sync service** — synchronizes reading positions
 between KOReader, Moon+ Reader Pro, Calibre, and Goodreads.
+
+
 
 > **Phase 0 Research & Fixtures** — This repository contains research notes,
 > protocol simulators, and fixture collections. No production code yet.
@@ -135,6 +177,33 @@ go build -o readsync-spike.exe .
 **Go 1.22+ with `kardianos/service`**. See `docs/adr/0001-language-and-service-framework.md`.
 
 ---
+
+## Architecture Overview
+
+```
+cmd/readsync-service/   Windows Service entry point (kardianos/service)
+cmd/readsyncctl/        CLI: status, adapters, conflicts, outbox, db, diagnostics
+cmd/readsync-tray/      System tray icon (native Win32 syscall)
+internal/model/         ALL domain types and enums (no logic)
+internal/db/            SQLite WAL-mode + 3 migrations (APPEND ONLY)
+internal/core/          Event pipeline (single-writer goroutine)
+internal/resolver/      10-signal identity ladder + Jaro-Winkler fuzzy match
+internal/conflicts/     5-detector conflict engine + auto-resolve gate
+internal/outbox/        Exponential backoff outbox (10 attempts, 5s–2h)
+internal/logging/       Dual-stream logger (activity + JSONL) + secret redaction
+internal/secrets/       Windows DPAPI / Credential Manager store
+internal/api/           Admin HTTP server (127.0.0.1:7201, CSRF protected)
+internal/setup/         10-step wizard state machine
+internal/repair/        12 repair actions (port picker, DB repair, …)
+internal/diagnostics/   Health snapshot + bundle exporter
+internal/adapters/      Calibre + KOReader + Moon+ + Goodreads + Fake adapters
+tests/integration/      E2E tests with fake adapters + in-memory SQLite
+tests/security/         CSRF and secret-redaction black-box tests
+```
+
+See [AGENTS.md](AGENTS.md) for the full architecture guide and developer reference.
+
+
 
 ## Phase Roadmap
 

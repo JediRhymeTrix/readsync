@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased] — Phase 10 (Documentation & LLM-Enablement)
+
+### Added
+- `AGENTS.md` — comprehensive AI coding agent guide: architecture, conventions, build/test, public APIs, security rules, cross-reference map.
+- `CLAUDE.md` — Claude-specific behavioural instructions (auto-read by Claude Sonnet/Opus).
+- `.github/copilot-instructions.md` — GitHub Copilot instructions with architecture and security rules.
+- `.cursor/rules` — Cursor AI rules with CGO split, key files, and test commands.
+- `llms.txt` — LLM-readable project index per llmstxt.org spec.
+- `examples/` directory with 5 runnable examples: `api-query/query.ps1`, `koreader-push/push.sh`, `moon-webdav/sync.sh`, `resolve-book/main.go`, `conflict-scenario/main.go`.
+- `docs/phases/README.md`: added Phase 10 entry.
+
+### Changed
+- `README.md`: polished with CI/release/Go/license/platform badges; LLM-summary comment; description table; Build from Source section; Architecture Overview; documentation index table; updated Phase Roadmap. Removed stale Phase 0 callout.
+- All public API files reviewed for GoDoc completeness — existing docs confirmed adequate.
+
+---
+
 ## [Unreleased] — Phase 9 (Closeout & Cleanup)
 
 ### Added

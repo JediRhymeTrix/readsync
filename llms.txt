@@ -1,0 +1,59 @@
+# ReadSync
+
+> Self-hosted Windows background service that synchronises reading progress
+> across KOReader, Moon+ Reader Pro, Calibre, and Goodreads.
+> No cloud dependency. No Goodreads API key required.
+
+## Summary
+
+ReadSync (`github.com/readsync/readsync`) is a Go 1.22+ Windows Service that:
+
+- Implements a KOSync-compatible HTTP server (port 7200) for KOReader sync.
+- Implements a WebDAV server (port 8765) for Moon+ Reader Pro `.po` file sync.
+- Reads and writes Calibre's `calibredb` custom columns (`#readsync_progress`).
+- Bridges progress to Goodreads via the Calibre Goodreads Sync plugin (no API key).
+- Provides a browser-based admin UI at `http://127.0.0.1:7201/` with a 10-step setup wizard.
+- Uses SQLite (WAL mode) for crash-safe local state.
+- Ships as a single-binary Inno Setup installer for Windows 10/11.
+
+Key design: 10-signal identity resolution, 5-detector conflict engine, exponential-backoff
+outbox worker, CSRF-protected admin API, Windows DPAPI secrets storage, secret-redacting logger.
+
+## Docs
+
+- [README.md](README.md): Quick start, setup walkthrough, architecture, make targets
+- [AGENTS.md](AGENTS.md): Full AI coding agent guide — architecture, conventions, build/test, public APIs, security rules
+- [CLAUDE.md](CLAUDE.md): Claude-specific instructions
+- [CONTRIBUTING.md](CONTRIBUTING.md): Human contributor guide, branching, commits, PR process, release
+- [SECURITY.md](SECURITY.md): Vulnerability disclosure, security design notes
+- [SUPPORT.md](SUPPORT.md): Support channels and expectations
+- [CHANGELOG.md](CHANGELOG.md): Full release history (P0 through P10)
+- [docs/adr/0001-language-and-service-framework.md](docs/adr/0001-language-and-service-framework.md): ADR — Go + kardianos/service decision
+- [docs/research/koreader.md](docs/research/koreader.md): KOSync protocol specification
+- [docs/research/moonplus.md](docs/research/moonplus.md): Moon+ WebDAV protocol + .po file format
+- [docs/research/calibre.md](docs/research/calibre.md): Calibre CLI commands and custom columns
+- [docs/research/goodreads-bridge.md](docs/research/goodreads-bridge.md): Goodreads Sync plugin integration design
+- [docs/diagnostic-bundle.md](docs/diagnostic-bundle.md): Diagnostic bundle export procedure
+- [docs/qa/acceptance-checklist.md](docs/qa/acceptance-checklist.md): 14 acceptance criteria with test mapping
+- [docs/phases/README.md](docs/phases/README.md): Phase delivery manifests index (P0–P9)
+- [examples/README.md](examples/README.md): Runnable usage examples
+- [tests/README.md](tests/README.md): E2E and Playwright test instructions
+
+## Source
+
+- [go.mod](go.mod): Module `github.com/readsync/readsync`, Go 1.22+
+- [internal/model/model.go](internal/model/model.go): All domain types (Source, ReadStatus, OutboxStatus, etc.)
+- [internal/adapters/adapter.go](internal/adapters/adapter.go): Adapter / EventEmitter / WriteTarget interfaces
+- [internal/resolver/resolver.go](internal/resolver/resolver.go): 10-signal identity resolver + confidence bands
+- [internal/conflicts/engine.go](internal/conflicts/engine.go): 5-detector conflict engine + auto-resolve gate
+- [internal/outbox/worker.go](internal/outbox/worker.go): Exponential backoff outbox worker (10 attempts, 5s–2h)
+- [internal/core/pipeline.go](internal/core/pipeline.go): Single-writer event pipeline
+- [internal/api/server.go](internal/api/server.go): Admin HTTP server (127.0.0.1:7201, CSRF)
+- [internal/logging/redact.go](internal/logging/redact.go): Secret-field redaction for log output
+- [internal/secrets/secrets.go](internal/secrets/secrets.go): Store interface + DPAPI + MemStore + ChainStore
+- [internal/db/migrations.go](internal/db/migrations.go): 3 versioned SQL migrations (append-only)
+- [internal/setup/wizard.go](internal/setup/wizard.go): 10-step setup wizard state machine
+- [internal/repair/repair.go](internal/repair/repair.go): 12 self-repair actions
+- [Makefile](Makefile): All build and test targets
+- [.github/workflows/ci.yml](.github/workflows/ci.yml): CI pipeline (unit, integration, cross-compile)
+- [.github/workflows/release.yml](.github/workflows/release.yml): Release automation

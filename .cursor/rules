@@ -1,0 +1,69 @@
+# Cursor Rules for ReadSync
+
+## Project
+ReadSync — Go 1.22+ Windows reading-progress sync service.
+Module: github.com/readsync/readsync
+Full guide: AGENTS.md
+
+## Language & style
+- Go 1.22+ only
+- gofmt/goimports always
+- Error strings: lowercase, no trailing period
+- No panic() in production code
+- Package names: singular (model, outbox, resolver)
+- Black-box tests: package foo_test
+
+## Architecture rules
+- Domain types: internal/model/model.go only
+- Pipeline writes: only via core.Pipeline.Submit()
+- Migrations: APPEND-ONLY to internal/db/migrations.go
+- Admin UI: always bind to 127.0.0.1, never 0.0.0.0
+- CSRF: every write endpoint needs requireCSRF(s.csrfToken, handler)
+- Secrets: internal/secrets/ only, never hardcode
+- Logging: internal/logging/ only, never log.Printf
+- No Goodreads API HTTP calls
+
+## CGO split
+Pure-Go (no CGO allowed):
+  internal/adapters/calibre/opf/
+  internal/adapters/koreader/codec/
+  internal/adapters/moon/
+  internal/resolver/
+  internal/conflicts/
+  internal/logging/
+  internal/setup/
+  internal/repair/
+  internal/secrets/
+  internal/api/
+  tests/security/
+
+CGO required (go-sqlite3):
+  internal/db/
+  internal/core/
+  internal/adapters/calibre/ (parent)
+  internal/adapters/koreader/ (parent)
+  tests/integration/
+
+## Key files
+internal/model/model.go         - all domain types
+internal/adapters/adapter.go    - Adapter/EventEmitter/WriteTarget interfaces
+internal/resolver/resolver.go   - Score(), Band(), WritebackEnabled()
+internal/conflicts/engine.go    - DetectSuspiciousJump(), CanAutoResolve()
+internal/outbox/worker.go       - NextRetry(), Enqueue(), Worker
+internal/api/server.go          - Server, CSRFHeader constant
+internal/logging/redact.go      - IsSecretKey(), add new secret keys here
+internal/db/migrations.go       - APPEND ONLY, never modify existing
+
+## Test commands
+make test-unit              # no CGO
+make test-phase7-unit       # all no-CGO packages
+make test-security          # CSRF + redaction
+make test-integration       # CGO required
+make test                   # all
+
+## Docs
+AGENTS.md                   - Full architecture + conventions
+docs/research/koreader.md   - KOSync protocol
+docs/research/moonplus.md   - Moon+ WebDAV protocol
+docs/research/calibre.md    - Calibre CLI details
+docs/qa/acceptance-checklist.md - 14 acceptance criteria

@@ -29,3 +29,16 @@ Key Phase 9 deliverables:
 - `docs/phases/` — this directory (canonical manifest location)
 - Makefile `test-pipeline` target (fixes duplicate `test-e2e`)
 - CI updated to cover all no-CGO packages in `phase7-unit` job
+
+## Phase 10 — Documentation & LLM-Enablement Sweep
+
+Key Phase 10 deliverables:
+- `README.md` — polished with badges, full usage, config reference, architecture overview
+- `AGENTS.md` — comprehensive AI coding agent guide (architecture, conventions, build/test, security)
+- `CLAUDE.md` — Claude-specific instructions (automatically read by Claude)
+- `.github/copilot-instructions.md` — GitHub Copilot context
+- `.cursor/rules` — Cursor AI rules
+- `llms.txt` — LLM-readable project index (per llmstxt.org spec)
+- `examples/` — runnable usage examples (API query, KOReader, Moon+ WebDAV, resolver, conflicts)
+- All public API reviewed for GoDoc completeness
+
