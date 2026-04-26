@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased] — Phase 11 (Final Closeout & Publishing)
+
+### Added
+- `docs/github-push-prompt.md` — self-contained GitHub publishing prompt with
+  every `gh` CLI and REST API command needed: repo create/push, description,
+  20 SEO topics, branch protection (7 required checks, dismiss stale, CODEOWNERS),
+  Dependabot, CodeQL + secret scanning, 35 labels, v0.7.0 release, Release Drafter.
+
+### Changed
+- `llms.txt`: added `docs/github-push-prompt.md` entry; updated phase index P0–P10.
+- Final sweep: `go vet` clean, formatter clean, spell-check clean over all files.
+- CI workflow job names verified to match branch-protection `contexts` list exactly.
+
+---
+
+
 ## [Unreleased] — Phase 10 (Documentation & LLM-Enablement)
 
 ### Added

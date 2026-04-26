@@ -35,7 +35,8 @@ outbox worker, CSRF-protected admin API, Windows DPAPI secrets storage, secret-r
 - [docs/research/goodreads-bridge.md](docs/research/goodreads-bridge.md): Goodreads Sync plugin integration design
 - [docs/diagnostic-bundle.md](docs/diagnostic-bundle.md): Diagnostic bundle export procedure
 - [docs/qa/acceptance-checklist.md](docs/qa/acceptance-checklist.md): 14 acceptance criteria with test mapping
-- [docs/phases/README.md](docs/phases/README.md): Phase delivery manifests index (P0–P9)
+- [docs/phases/README.md](docs/phases/README.md): Phase delivery manifests index (P0–P10)
+- [docs/github-push-prompt.md](docs/github-push-prompt.md): Self-contained GitHub publishing prompt (gh CLI + API commands)
 - [examples/README.md](examples/README.md): Runnable usage examples
 - [tests/README.md](tests/README.md): E2E and Playwright test instructions
 
