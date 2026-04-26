@@ -54,7 +54,9 @@ func setupMoon(t *testing.T) *moonEnv {
 	logger := logging.New(io.Discard, io.Discard, logging.LevelError)
 
 	pipeline := core.NewPipeline(database.SQL(), logger)
-	go pipeline.Run(t.Context())
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go pipeline.Run(ctx)
 
 	captures := filepath.Join(tmp, "captures")
 	cfg := moon.Defaults()
@@ -74,7 +76,7 @@ func setupMoon(t *testing.T) *moonEnv {
 	hs := httptest.NewServer(adapter.WebDAVServer())
 	t.Cleanup(hs.Close)
 
-	if err := adapter.Start(t.Context()); err != nil {
+	if err := adapter.Start(ctx); err != nil {
 		t.Fatalf("adapter.Start: %v", err)
 	}
 
