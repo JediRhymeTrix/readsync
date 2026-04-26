@@ -80,8 +80,18 @@ func (w *Worker) processOne(ctx context.Context) {
 
 // NextRetry computes the next retry time for the given attempt number.
 func NextRetry(attempt int) time.Time {
-	exp := math.Pow(2, float64(attempt-1))
-	delay := time.Duration(float64(BaseDelay) * exp)
+	var delay time.Duration
+	if attempt <= 1 {
+		delay = BaseDelay
+	} else {
+		maxMultiplier := float64(MaxDelay) / float64(BaseDelay)
+		exp := math.Pow(2, float64(attempt-1))
+		if exp >= maxMultiplier {
+			delay = MaxDelay
+		} else {
+			delay = time.Duration(float64(BaseDelay) * exp)
+		}
+	}
 	if delay > MaxDelay {
 		delay = MaxDelay
 	}

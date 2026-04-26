@@ -6,6 +6,7 @@ package koreader_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -59,7 +60,9 @@ func setupTestEnv(t *testing.T) *testEnv {
 
 	logger := logging.New(os.Stdout, nil, logging.LevelError)
 	pipeline := core.NewPipeline(database.SQL(), logger)
-	go pipeline.Run(t.Context())
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go pipeline.Run(ctx)
 
 	cfg := koreader.DefaultConfig()
 	cfg.RegistrationOpen = true
@@ -154,7 +157,9 @@ func TestRegister_ClosedRegistration(t *testing.T) {
 
 	logger := logging.New(os.Stdout, nil, logging.LevelError)
 	pipeline2 := core.NewPipeline(database.SQL(), logger)
-	go pipeline2.Run(t.Context())
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go pipeline2.Run(ctx)
 
 	cfg := koreader.DefaultConfig() // RegistrationOpen=false by default
 	adapter2 := koreader.New(cfg, database.SQL(), logger)
