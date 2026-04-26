@@ -1,3 +1,5 @@
+//go:build cgo
+
 // internal/adapters/moon/moon_test.go
 //
 // End-to-end integration test for the Moon+ adapter.  Requires CGO/GCC
