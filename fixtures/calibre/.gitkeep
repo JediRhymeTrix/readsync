@@ -1,0 +1,3 @@
+# This directory holds a synthetic Calibre library for integration tests.
+# It is populated by the integration test setup (calibredb add).
+# The directory is intentionally empty in version control.
