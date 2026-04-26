@@ -169,6 +169,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == http.MethodOptions {
 		w.Header().Set("Allow", "OPTIONS, PROPFIND, GET, PUT, DELETE, MKCOL, MOVE, LOCK, UNLOCK")
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 	ctx := context.WithValue(r.Context(), userCtxKey{}, user)
 	s.handler.ServeHTTP(w, r.WithContext(ctx))
