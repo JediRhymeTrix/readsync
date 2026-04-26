@@ -49,10 +49,36 @@ var secretPatterns = []*regexp.Regexp{
 const redactedPlaceholder = "[REDACTED]"
 
 // IsSecretKey returns true when the field key name indicates a secret.
+//
+// Matching is case-insensitive and uses word boundaries (_, -,
+// or string ends) to avoid false positives like "author" containing
+// "auth".
 func IsSecretKey(key string) bool {
 	lk := strings.ToLower(key)
 	for _, sk := range secretKeys {
-		if strings.Contains(lk, sk) {
+		if tokenContains(lk, sk) {
+			return true
+		}
+	}
+	return false
+}
+
+// tokenContains reports whether s contains needle as a discrete token,
+// where token boundaries are _, -, or the start/end of s. This
+// keeps "auth" out of "author" while still matching "x-api-key"
+// and "client_secret".
+func tokenContains(s, needle string) bool {
+	if s == needle {
+		return true
+	}
+	n := len(needle)
+	for i := 0; i+n <= len(s); i++ {
+		if s[i:i+n] != needle {
+			continue
+		}
+		leftOK := i == 0 || s[i-1] == '_' || s[i-1] == '-'
+		rightOK := i+n == len(s) || s[i+n] == '_' || s[i+n] == '-'
+		if leftOK && rightOK {
 			return true
 		}
 	}

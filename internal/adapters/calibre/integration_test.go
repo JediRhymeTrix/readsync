@@ -26,6 +26,22 @@ func findCalibredbForTest(t *testing.T) string {
 	return p
 }
 
+// skipIfCalibreRunning skips the test when any Calibre process that
+// blocks mutating calibredb commands is running. calibredb's
+// single-instance check is global on Windows: if calibre.exe,
+// calibre-debug.exe, calibre-server.exe, or calibre-parallel.exe is
+// running, ANY mutating call fails with
+//   "Another calibre program ... is running"
+// regardless of which library --library-path points at. This is
+// operator state, not a test failure, so we skip rather than fail.
+func skipIfCalibreRunning(t *testing.T) {
+	t.Helper()
+	if isGUIRunning() {
+		t.Skip("a Calibre process (GUI/server/parallel) is running; " +
+			"calibredb refuses mutating commands in that state")
+	}
+}
+
 // makeTempLibrary creates a fresh empty Calibre library in a temp dir.
 func makeTempLibrary(t *testing.T, calibredbPath string) string {
 	t.Helper()
@@ -62,6 +78,7 @@ func TestIntegration_SystemScan(t *testing.T) {
 // that EnsureColumns creates all required #readsync_* columns.
 func TestIntegration_EnsureColumns(t *testing.T) {
 	cdb := findCalibredbForTest(t)
+	skipIfCalibreRunning(t)
 	lib := makeTempLibrary(t, cdb)
 
 	log := newTestLogger()
@@ -102,6 +119,7 @@ func TestIntegration_EnsureColumns(t *testing.T) {
 // It is skipped if the fixture library has no books.
 func TestIntegration_ReadWrite(t *testing.T) {
 	cdb := findCalibredbForTest(t)
+	skipIfCalibreRunning(t)
 	lib := makeTempLibrary(t, cdb)
 
 	log := newTestLogger()

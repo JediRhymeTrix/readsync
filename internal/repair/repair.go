@@ -31,8 +31,11 @@ func RetryOnBusy(ctx context.Context, maxRetries int, fn func() error) error {
 		if i >= maxRetries {
 			break
 		}
-		delay := time.Duration(float64(50*time.Millisecond)*float64(1<<uint(i))) +
-			time.Duration(rand.Int63n(int64(20 * time.Millisecond)))
+		// Exponential backoff: 50ms * 2^i, plus up to 20ms jitter.
+		// Use an explicit int shift so go vet does not flag a float shift.
+		shift := int64(1) << uint(i)
+		delay := time.Duration(int64(50*time.Millisecond)*shift) +
+			time.Duration(rand.Int63n(int64(20*time.Millisecond)))
 		select {
 		case <-ctx.Done():
 			return ctx.Err()

@@ -350,7 +350,4 @@ func (a *Adapter) drainWriteQueue(ctx context.Context) {
 			a.writeQueueMu.Unlock()
 		}
 	}
-} // drainWriteQueue
-
-
-}
+} // drainWriteQueue`r`n
