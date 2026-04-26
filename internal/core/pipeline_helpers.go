@@ -62,6 +62,11 @@ func resolveBook(ctx context.Context, tx *sql.Tx, ev AdapterEvent) (int64, int, 
 	if err != nil {
 		return 0, 0, err
 	}
+	// Persist adapter-specific alias keys so loadCanonicalByDocHash can find this book.
+	if err := insertBookAliases(ctx, tx, newID, ev.BookEvidence); err != nil {
+		return 0, 0, err
+	}
+
 	confidence := resolver.EvidenceQuality(ev.BookEvidence)
 	return newID, confidence, nil
 }
@@ -162,3 +167,27 @@ func nullStr(s string) any {
 	}
 	return s
 }
+
+// insertBookAliases inserts book_aliases rows for adapter-specific keys
+// present in the evidence (KOReaderDocHash, MoonKey).
+func insertBookAliases(ctx context.Context, tx *sql.Tx, bookID int64, ev resolver.Evidence) error {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	type alias struct{ source, key string }
+	for _, a := range []alias{
+		{string(model.SourceKOReader), ev.KOReaderDocHash},
+		{string(model.SourceMoon), ev.MoonKey},
+	} {
+		if a.key == "" {
+			continue
+		}
+		_, err := tx.ExecContext(ctx,
+			`INSERT OR IGNORE INTO book_aliases(book_id, source, adapter_key, created_at)
+			 VALUES (?,?,?,?)`,
+			bookID, a.source, a.key, now)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+

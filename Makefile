@@ -3,7 +3,7 @@
 
 GOOS    ?= windows
 GOARCH  ?= amd64
-GOFLAGS := CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH)
+GOFLAGS = CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH)
 
 .PHONY: all fixtures koreader-sim moon-recorder winsvc-spike vet clean help
 
@@ -103,4 +103,24 @@ build: deps vet-phase1
 	go build -o bin/readsync-service.exe ./cmd/readsync-service/
 	go build -o bin/readsyncctl.exe       ./cmd/readsyncctl/
 	go build -o bin/readsync-tray.exe     ./cmd/readsync-tray/
+
+
+# ─── Phase 3 KOReader adapter ─────────────────────────────────────────────────
+# NOTE: `make deps` must be run once before these targets work.
+#   Phase 3 added gin, x/crypto, x/time to go.mod. go.sum does not exist
+#   until `go mod tidy` (= `make deps`) is run with network + GCC available.
+#   See .phase3-manifest.md §REQUIRED ACTION for full instructions.
+
+## test-koreader: Run KOReader adapter integration tests (requires CGO)
+test-koreader:
+	CGO_ENABLED=1 go test -v -count=1 -timeout 60s ./internal/adapters/koreader/...
+
+## run: Start dev runner on 127.0.0.1:7200 (registration open, go run .)
+run:
+	CGO_ENABLED=1 go run . --db readsync-dev.db
+
+## replay-koreader-live: Replay KOSync curl fixtures against the live dev runner
+## Start `make run` in another terminal first, then run this.
+replay-koreader-live:
+	bash fixtures/koreader/curl-replay.sh http://localhost:7200
 

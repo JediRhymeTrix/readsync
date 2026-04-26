@@ -1,20 +1,7 @@
-//go:build ignore
-// +build ignore
-// Original Phase 1 entry point — superseded by main_service.go in Phase 3.
-
-
-// cmd/readsync-service/main.go
+// cmd/readsync-service/main_service.go
 //
 // ReadSync Windows Service entry point.
-// Installs and runs as a proper Windows Service using kardianos/service.
-//
-// Usage (requires admin for install/start/stop/uninstall):
-//   readsync-service.exe install
-//   readsync-service.exe start
-//   readsync-service.exe stop
-//   readsync-service.exe uninstall
-//   readsync-service.exe status
-//   readsync-service.exe run      (foreground, no admin needed)
+// This file contains the actual implementation; main.go is left for reference.
 
 package main
 
@@ -24,14 +11,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"github.com/kardianos/service"
-	"github.com/readsync/readsync/internal/adapters/koreader"
-	"github.com/readsync/readsync/internal/api"
-	"github.com/readsync/readsync/internal/core"
-	"github.com/readsync/readsync/internal/db"
-	"github.com/readsync/readsync/internal/logging"
 
 	"github.com/kardianos/service"
+	"github.com/readsync/readsync/internal/adapters/koreader"
 	"github.com/readsync/readsync/internal/api"
 	"github.com/readsync/readsync/internal/core"
 	"github.com/readsync/readsync/internal/db"
@@ -39,35 +21,34 @@ import (
 )
 
 const (
-	serviceName        = "ReadSync"
-	serviceDisplayName = "ReadSync Book Sync Service"
-	serviceDescription = "Keeps reading progress in sync across Calibre, KOReader, Moon+, and Goodreads."
-	version            = "0.1.0-phase1"
+	serviceName2        = "ReadSync"
+	serviceDisplayName2 = "ReadSync Book Sync Service"
+	serviceDescription2 = "Keeps reading progress in sync across Calibre, KOReader, Moon+, and Goodreads."
+	version2            = "0.1.0-phase3"
 )
 
-type program struct {
+type program2 struct {
 	svc    service.Service
 	cancel context.CancelFunc
 	done   chan struct{}
 }
 
-func (p *program) Start(s service.Service) error {
+func (p *program2) Start(s service.Service) error {
 	p.svc = s
 	ctx, cancel := context.WithCancel(context.Background())
 	p.cancel = cancel
 	p.done = make(chan struct{})
-	go p.runService(ctx)
+	go p.runService2(ctx)
 	return nil
 }
 
-func (p *program) runService(ctx context.Context) {
+func (p *program2) runService2(ctx context.Context) {
 	defer close(p.done)
 
 	logger := logging.New(os.Stdout, os.Stderr, logging.LevelInfo)
-	logger.Info("ReadSync service starting", logging.F("version", version))
+	logger.Info("ReadSync service starting", logging.F("version", version2))
 
-	// Open database.
-	dbPath := defaultDBPath()
+	dbPath := defaultDBPath2()
 	database, err := db.Open(dbPath)
 	if err != nil {
 		logger.Error("failed to open database", logging.F("path", dbPath), logging.F("error", err))
@@ -81,11 +62,9 @@ func (p *program) runService(ctx context.Context) {
 	}
 	logger.Info("database ready", logging.F("path", dbPath))
 
-	// Start pipeline.
 	pipeline := core.NewPipeline(database.SQL(), logger)
 	go pipeline.Run(ctx)
 
-	// Start API server.
 	apiServer, err := api.New(api.Deps{Port: 7201})
 	if err != nil {
 		logger.Error("api init failed", logging.F("error", err))
@@ -96,24 +75,20 @@ func (p *program) runService(ctx context.Context) {
 		return
 	}
 
-
-	// Start KOReader KOSync adapter.
+	// Start KOReader KOSync adapter on port 7200.
 	koreaderAdapter := koreader.New(koreader.DefaultConfig(), database.SQL(), logger)
 	koreaderAdapter.SetPipeline(pipeline)
 	if err := koreaderAdapter.Start(ctx); err != nil {
+		// Non-fatal: log and continue — KOReader sync unavailable but service runs.
 		logger.Error("koreader adapter start failed", logging.F("error", err))
-		// Non-fatal: service continues without KOReader sync.
 	}
 
-
 	logger.Info("ReadSync service ready")
-
-	// Wait for shutdown.
 	<-ctx.Done()
 	logger.Info("ReadSync service stopping")
 }
 
-func (p *program) Stop(_ service.Service) error {
+func (p *program2) Stop(_ service.Service) error {
 	if p.cancel != nil {
 		p.cancel()
 	}
@@ -123,7 +98,7 @@ func (p *program) Stop(_ service.Service) error {
 	return nil
 }
 
-func defaultDBPath() string {
+func defaultDBPath2() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		dir = "."
@@ -132,62 +107,39 @@ func defaultDBPath() string {
 }
 
 func main() {
-	svcConfig := &service.Config{
-		Name:        serviceName,
-		DisplayName: serviceDisplayName,
-		Description: serviceDescription,
-	}
+	runService2()
+}
 
-	prg := &program{}
+func runService2() {
+	svcConfig := &service.Config{
+		Name:        serviceName2,
+		DisplayName: serviceDisplayName2,
+		Description: serviceDescription2,
+	}
+	prg := &program2{}
 	svc, err := service.New(prg, svcConfig)
 	if err != nil {
 		log.Fatalf("service.New: %v", err)
 	}
-
 	if len(os.Args) < 2 {
-		// SCM launches with no args → run the service.
 		if err := svc.Run(); err != nil {
 			log.Fatalf("run: %v", err)
 		}
 		return
 	}
-
 	switch os.Args[1] {
 	case "install", "uninstall", "start", "stop":
 		if err := service.Control(svc, os.Args[1]); err != nil {
 			log.Fatalf("%s: %v", os.Args[1], err)
 		}
-		fmt.Printf("Service %s: %s OK\n", serviceName, os.Args[1])
-
-	case "status":
-		status, err := svc.Status()
-		if err != nil {
-			log.Fatalf("status: %v", err)
-		}
-		fmt.Printf("Service %s: %s\n", serviceName, statusString(status))
-
+		fmt.Printf("Service %s: %s OK\n", serviceName2, os.Args[1])
 	case "run":
-		fmt.Printf("Running %s in foreground (Ctrl+C to stop)\n", serviceName)
+		fmt.Printf("Running %s in foreground (Ctrl+C to stop)\n", serviceName2)
 		if err := svc.Run(); err != nil {
 			log.Fatalf("run: %v", err)
 		}
-
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown action: %q\n", os.Args[1])
-		fmt.Fprintf(os.Stderr, "Valid: install uninstall start stop status run\n")
 		os.Exit(1)
-	}
-}
-
-func statusString(s service.Status) string {
-	switch s {
-	case service.StatusRunning:
-		return "Running"
-	case service.StatusStopped:
-		return "Stopped"
-	case service.StatusUnknown:
-		return "Unknown"
-	default:
-		return fmt.Sprintf("status(%d)", s)
 	}
 }

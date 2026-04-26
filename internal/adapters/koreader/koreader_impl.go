@@ -1,40 +1,7 @@
-//go:build ignore
-// +build ignore
-// This file is replaced by the Phase 3 implementation below.
-
-
-// internal/adapters/koreader/koreader.go
+// internal/adapters/koreader/koreader_impl.go
 //
-// KOReader adapter stub. Real implementation (KOSync HTTP server) in Phase 2.
-
-package koreader
-
-import (
-	"context"
-	"fmt"
-
-	"github.com/readsync/readsync/internal/model"
-)
-
-// Adapter is the KOReader adapter stub.
-type Adapter struct{}
-
-// New creates a KOReader adapter stub.
-func New() *Adapter { return &Adapter{} }
-
-func (a *Adapter) Source() model.Source             { return model.SourceKOReader }
-func (a *Adapter) Health() model.AdapterHealthState { return model.HealthDisabled }
-func (a *Adapter) Start(_ context.Context) error    { return nil }
-func (a *Adapter) Stop() error                      { return nil }
-func (a *Adapter) WriteProgress(_ context.Context, _ *model.OutboxJob) error {
-	return fmt.Errorf("koreader adapter: not implemented (Phase 2)")
-}
-//go:build phase3
-// +build phase3
-
-// --- Phase 3 implementation (this file intentionally left as a bridge) ---
-// The implementation lives in koreader_impl.go.
-// The old Phase 1 stub above is gated by the missing build tag.
+// KOReader KOSync-compatible HTTP adapter.
+// Auth: username + md5(password) headers. Storage: bcrypt(md5Key).
 
 package koreader
 
@@ -103,8 +70,8 @@ func New(cfg Config, db *sql.DB, log *logging.Logger) *Adapter {
 	}
 }
 
-func (a *Adapter) Source() model.Source { return model.SourceKOReader }
-func (a *Adapter) SetPipeline(p *core.Pipeline) { a.pipeline = p }
+func (a *Adapter) Source() model.Source           { return model.SourceKOReader }
+func (a *Adapter) SetPipeline(p *core.Pipeline)   { a.pipeline = p }
 
 func (a *Adapter) Health() model.AdapterHealthState {
 	a.mu.Lock()
@@ -167,6 +134,13 @@ func (a *Adapter) WriteProgress(_ context.Context, _ *model.OutboxJob) error {
 	return fmt.Errorf("koreader adapter: WriteProgress not supported")
 }
 
+// RegisterTestRoutes wires the KOSync routes onto an externally-provided
+// router group.  Used by tests that want to exercise handlers with
+// httptest.NewRecorder without starting a real TCP listener.
+func (a *Adapter) RegisterTestRoutes(g *gin.RouterGroup) {
+	a.registerRoutes(g)
+}
+
 func (a *Adapter) registerRoutes(g *gin.RouterGroup) {
 	g.POST("/users/create", a.rateLimitMiddleware, a.handleRegister)
 	g.GET("/users/auth", a.rateLimitMiddleware, a.authMiddleware, a.handleAuth)
@@ -211,7 +185,3 @@ func (a *Adapter) getLimiter(ip string) *rate.Limiter {
 	a.limiters[ip] = l
 	return l
 }
-
-	limiters  map[string]*rate.Limiter
-}
-

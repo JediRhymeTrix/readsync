@@ -13,7 +13,11 @@ type migration struct {
 // migrations is the ordered list of all schema migrations.
 // New migrations MUST be appended; existing entries MUST NOT be modified.
 var migrations = []migration{
+
+
 	{version: 1, sql: migration1},
+	{version: 2, sql: migration2},
+
 }
 
 const migration1 = `
@@ -140,3 +144,24 @@ CREATE TABLE IF NOT EXISTS adapter_health (
     notes           TEXT
 );
 `
+
+const migration2 = `
+CREATE TABLE IF NOT EXISTS koreader_users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    username      TEXT    NOT NULL UNIQUE,
+    password_hash TEXT    NOT NULL,
+    created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS koreader_devices (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES koreader_users(id) ON DELETE CASCADE,
+    device_id   TEXT    NOT NULL,
+    device_name TEXT    NOT NULL DEFAULT '',
+    last_seen   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    UNIQUE(user_id, device_id)
+);
+CREATE INDEX IF NOT EXISTS idx_koreader_devices_user ON koreader_devices(user_id);
+`
+
