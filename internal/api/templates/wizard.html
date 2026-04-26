@@ -1,0 +1,122 @@
+{{define "content"}}
+<h1>Setup Wizard</h1>
+
+<aside class="rs-wizard-nav">
+    <ol>
+    {{range .Pages}}
+        <li class="rs-wizard-step rs-status-{{.PageStatus}} {{if eq .Slug $.CurrentSlug}}rs-current{{end}}">
+            <a href="/ui/wizard?page={{.Slug}}">{{.Title}}</a>
+            <span class="rs-wizard-status">{{.PageStatus}}</span>
+        </li>
+    {{end}}
+    </ol>
+</aside>
+
+<section class="rs-wizard-page" data-slug="{{.CurrentSlug}}">
+    <h2>{{.CurrentTitle}}</h2>
+    <p class="rs-wizard-summary">{{.CurrentSummary}}</p>
+
+    {{if .CurrentMessage}}
+    <div class="rs-wizard-message rs-status-{{.CurrentStatus}}">{{.CurrentMessage}}</div>
+    {{end}}
+
+    <div class="rs-wizard-body">
+    {{if eq .CurrentSlug "welcome"}}
+        <p>Welcome to ReadSync. This wizard will configure each adapter.
+        You can re-run it any time from the dashboard.</p>
+        <p>What you need:</p>
+        <ul>
+            <li>Calibre installed (recommended).</li>
+            <li>Optional: KOReader on a device, Moon+ Reader Pro on Android, Goodreads Sync plugin.</li>
+        </ul>
+    {{else if eq .CurrentSlug "system_scan"}}
+        <button hx-post="/api/wizard/run/system_scan"
+                hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+                hx-target="#scan-result" hx-swap="innerHTML">
+            Run system scan
+        </button>
+        <div id="scan-result">{{.ScanResultHTML}}</div>
+    {{else if eq .CurrentSlug "calibre"}}
+        <form hx-post="/api/wizard/run/calibre"
+              hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+              hx-target="#calibre-result">
+            <label>calibredb path:
+                <input type="text" name="calibredb" value="{{.CalibredbPath}}">
+            </label>
+            <label>Library path:
+                <input type="text" name="library" value="{{.LibraryPath}}">
+            </label>
+            <button type="submit">Configure Calibre</button>
+        </form>
+        <div id="calibre-result"></div>
+    {{else if eq .CurrentSlug "goodreads_bridge"}}
+        <form hx-post="/api/wizard/run/goodreads_bridge"
+              hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+              hx-target="#gr-result">
+            <fieldset>
+                <legend>Bridge mode</legend>
+                <label><input type="radio" name="mode" value="disabled"> Disabled</label>
+                <label><input type="radio" name="mode" value="manual" checked> Manual (default)</label>
+                <label><input type="radio" name="mode" value="guided"> Guided</label>
+            </fieldset>
+            <button type="submit">Save mode</button>
+        </form>
+        <div id="gr-result"></div>
+    {{else if eq .CurrentSlug "koreader"}}
+        <button hx-post="/api/wizard/run/koreader"
+                hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+                hx-target="#ko-result">
+            Generate KOReader credentials
+        </button>
+        <div id="ko-result"></div>
+    {{else if eq .CurrentSlug "moon"}}
+        <button hx-post="/api/wizard/run/moon"
+                hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+                hx-target="#moon-result">
+            Generate Moon+ WebDAV setup
+        </button>
+        <div id="moon-result"></div>
+    {{else if eq .CurrentSlug "conflict_policy"}}
+        <form hx-post="/api/wizard/run/conflict_policy"
+              hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+              hx-target="#policy-result">
+            <label>Suspicious-jump %:
+                <input type="number" name="jump_pct" value="30" min="1" max="100">
+            </label>
+            <label>Finished-regression threshold %:
+                <input type="number" name="finished_pct" value="85" min="0" max="100">
+            </label>
+            <button type="submit">Save policy</button>
+        </form>
+        <div id="policy-result"></div>
+    {{else if eq .CurrentSlug "test_sync"}}
+        <button hx-post="/api/wizard/run/test_sync"
+                hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+                hx-target="#test-result">
+            Run end-to-end smoke test
+        </button>
+        <div id="test-result"></div>
+    {{else if eq .CurrentSlug "diagnostics"}}
+        <button hx-post="/api/wizard/run/diagnostics"
+                hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+                hx-target="#diag-result">
+            Export diagnostics bundle
+        </button>
+        <div id="diag-result"></div>
+    {{else if eq .CurrentSlug "finish"}}
+        <p>All steps completed.</p>
+        <button hx-post="/api/wizard/complete"
+                hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}'
+                hx-swap="none"
+                onclick="setTimeout(()=>location.href='/ui/dashboard',500)">
+            Finish setup
+        </button>
+    {{end}}
+    </div>
+
+    <nav class="rs-wizard-controls">
+        {{if .PrevSlug}}<a href="/ui/wizard?page={{.PrevSlug}}" class="rs-btn">Previous</a>{{end}}
+        {{if .NextSlug}}<a href="/ui/wizard?page={{.NextSlug}}" class="rs-btn">Next</a>{{end}}
+    </nav>
+</section>
+{{end}}

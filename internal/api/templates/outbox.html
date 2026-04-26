@@ -1,0 +1,36 @@
+{{define "content"}}
+<h1>Outbox</h1>
+
+<p>Pending writes to adapters. Use Retry to re-queue a deadletter row.</p>
+
+{{if .Jobs}}
+<table class="rs-table rs-outbox">
+    <thead><tr>
+        <th>ID</th><th>Book</th><th>Target</th><th>Status</th><th>Attempts</th><th>Last error</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+    {{range .Jobs}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.BookID}}</td>
+        <td>{{.TargetSource}}</td>
+        <td>{{.Status}}</td>
+        <td>{{.Attempts}}</td>
+        <td>{{.LastError}}</td>
+        <td>
+            <button hx-post="/api/outbox/{{.ID}}/retry"
+                    hx-headers='{"X-ReadSync-CSRF":"{{$.CSRFToken}}"}'
+                    hx-swap="none">Retry</button>
+            <button hx-post="/api/outbox/{{.ID}}/drop"
+                    hx-headers='{"X-ReadSync-CSRF":"{{$.CSRFToken}}"}'
+                    hx-confirm="Drop job {{.ID}}?"
+                    hx-swap="none">Drop</button>
+        </td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+{{else}}
+<p class="rs-empty">No outbox jobs. All writes are up to date.</p>
+{{end}}
+{{end}}

@@ -1,0 +1,22 @@
+{{define "content"}}
+<h1>Repair</h1>
+
+<p>One-click recovery actions (master spec section 13). Each runs server-side
+with full CSRF protection. Output appears below each button.</p>
+
+<div class="rs-repair-grid">
+    {{range .Actions}}
+    <div class="rs-repair-card">
+        <h3>{{.Title}}</h3>
+        <p>{{.Description}}</p>
+        <button hx-post="{{.Endpoint}}"
+                hx-headers='{"X-ReadSync-CSRF":"{{$.CSRFToken}}"}'
+                hx-target="#out-{{.Slug}}"
+                hx-swap="innerHTML">
+            Run
+        </button>
+        <pre id="out-{{.Slug}}" class="rs-repair-out"></pre>
+    </div>
+    {{end}}
+</div>
+{{end}}

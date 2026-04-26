@@ -1,0 +1,118 @@
+/* ReadSync admin UI styles. Minimal, dependency-free. */
+
+* { box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    margin: 0; padding: 0; line-height: 1.4;
+    background: #f6f7f9; color: #222;
+}
+
+.rs-header {
+    display: flex; align-items: center; gap: 1.5rem;
+    padding: 0.75rem 1.5rem; background: #1e293b; color: #f1f5f9;
+}
+.rs-header a { color: #f1f5f9; text-decoration: none; }
+.rs-header nav { display: flex; gap: 1rem; flex: 1; }
+.rs-header nav a:hover { text-decoration: underline; }
+.rs-logo { font-weight: 600; font-size: 1.1rem; }
+
+.rs-status-pill {
+    padding: 0.25rem 0.75rem; border-radius: 1rem;
+    background: #475569; font-size: 0.85rem; text-transform: uppercase;
+}
+.rs-status-pill[data-state="ok"] { background: #16a34a; }
+.rs-status-pill[data-state="degraded"] { background: #ca8a04; }
+.rs-status-pill[data-state="needs_user_action"] { background: #dc2626; }
+.rs-status-pill[data-state="failed"] { background: #7f1d1d; }
+.rs-status-pill[data-state="disabled"] { background: #6b7280; }
+
+.rs-main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1.5rem; }
+.rs-section { background: white; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+.rs-chip-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 0.75rem; }
+.rs-chip {
+    display: flex; flex-direction: column; gap: 0.25rem;
+    padding: 0.75rem; border-radius: 0.5rem;
+    border: 2px solid #cbd5e1; background: #f8fafc;
+}
+.rs-chip[data-state="ok"]                { border-color: #16a34a; }
+.rs-chip[data-state="degraded"]          { border-color: #ca8a04; }
+.rs-chip[data-state="needs_user_action"] { border-color: #dc2626; }
+.rs-chip[data-state="failed"]            { border-color: #7f1d1d; }
+.rs-chip[data-state="disabled"]          { border-color: #6b7280; opacity: 0.6; }
+.rs-chip-state { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
+.rs-chip-freshness { font-size: 0.8rem; color: #475569; }
+.rs-chip-err { color: #b91c1c; font-size: 0.8rem; }
+
+.rs-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+button, .rs-btn {
+    cursor: pointer; padding: 0.5rem 1rem;
+    background: #2563eb; color: white;
+    border: none; border-radius: 0.375rem;
+    font-size: 0.9rem; text-decoration: none;
+    display: inline-block;
+}
+button:hover, .rs-btn:hover { background: #1d4ed8; }
+button:disabled { background: #94a3b8; cursor: not-allowed; }
+
+.rs-table { width: 100%; border-collapse: collapse; }
+.rs-table th, .rs-table td {
+    text-align: left; padding: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+.rs-table th { background: #f1f5f9; font-weight: 600; }
+
+.rs-empty { color: #64748b; font-style: italic; }
+
+/* Wizard */
+.rs-wizard-nav {
+    float: left; width: 250px; padding: 1rem;
+    background: white; border-radius: 0.5rem; margin-right: 1rem;
+}
+.rs-wizard-nav ol { list-style: none; padding: 0; margin: 0; }
+.rs-wizard-step {
+    padding: 0.5rem; border-radius: 0.25rem;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.rs-wizard-step.rs-current { background: #dbeafe; }
+.rs-wizard-status { font-size: 0.75rem; }
+.rs-status-ok      .rs-wizard-status { color: #16a34a; }
+.rs-status-warn    .rs-wizard-status { color: #ca8a04; }
+.rs-status-error   .rs-wizard-status { color: #dc2626; }
+.rs-status-running .rs-wizard-status { color: #2563eb; }
+
+.rs-wizard-page { background: white; padding: 1.5rem; border-radius: 0.5rem; overflow: hidden; }
+.rs-wizard-summary { color: #475569; }
+.rs-wizard-message { padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1rem; }
+.rs-wizard-message.rs-status-ok { background: #dcfce7; color: #14532d; }
+.rs-wizard-message.rs-status-error { background: #fee2e2; color: #991b1b; }
+.rs-wizard-message.rs-status-warn { background: #fef9c3; color: #713f12; }
+.rs-wizard-controls { margin-top: 1.5rem; display: flex; gap: 0.5rem; }
+.rs-wizard-body label { display: block; margin: 0.5rem 0; }
+.rs-wizard-body input[type=text], .rs-wizard-body input[type=number] {
+    width: 100%; max-width: 400px; padding: 0.4rem;
+    border: 1px solid #cbd5e1; border-radius: 0.25rem;
+}
+.rs-wizard-body fieldset { border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.5rem 1rem; }
+
+/* Repair grid */
+.rs-repair-grid {
+    display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 1rem;
+}
+.rs-repair-card {
+    background: white; padding: 1rem; border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.rs-repair-card h3 { margin: 0 0 0.5rem; }
+.rs-repair-out {
+    margin-top: 0.75rem; padding: 0.5rem;
+    background: #f1f5f9; font-size: 0.8rem;
+    white-space: pre-wrap; word-wrap: break-word;
+    min-height: 1.5em; max-height: 200px; overflow-y: auto;
+}
+
+.rs-footer {
+    text-align: center; padding: 1rem; color: #64748b; font-size: 0.8rem;
+    display: flex; justify-content: space-between; max-width: 1100px;
+    margin: 1rem auto;
+}

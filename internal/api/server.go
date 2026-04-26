@@ -1,119 +1,197 @@
 // internal/api/server.go
 //
-// Local admin HTTP API, bound to 127.0.0.1 only.
-// CSRF token required on all state-mutating endpoints.
+// Local admin HTTP server. Always binds to 127.0.0.1; exposes both a
+// JSON API and a server-rendered HTML UI. Optional self-signed TLS.
+//
+// Security invariants (master spec section 16):
+//   - Listener address is 127.0.0.1 only.
+//   - Every state-mutating endpoint requires a valid X-ReadSync-CSRF
+//     header. The token is generated per-server-start and exposed in
+//     each HTML page as <meta name="csrf-token">.
 
 package api
 
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
+	"database/sql"
+	"embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io/fs"
 	"net"
 	"net/http"
+	"sync"
 	"time"
+
+	"github.com/readsync/readsync/internal/setup"
 )
 
 const (
-	defaultPort = 7201
-	csrfHeader  = "X-ReadSync-CSRF"
+	// DefaultPort is the canonical admin UI port.
+	DefaultPort = 7201
+
+	// CSRFHeader is the HTTP header carrying the CSRF token.
+	CSRFHeader = "X-ReadSync-CSRF"
 )
+
+//go:embed templates/*.html
+var templatesFS embed.FS
+
+//go:embed static/*
+var staticFS embed.FS
+
+// Deps holds all the dependencies the API server needs.
+type Deps struct {
+	DB          *sql.DB
+	Wizard      *setup.Wizard
+	Diagnostics DiagnosticsCollector
+	Version     string
+	Port        int
+	BindAddr    string // overrides 127.0.0.1; tests use ":0" or 127.0.0.1
+	TLSCert     *tls.Certificate
+}
+
+// DiagnosticsCollector is the contract between the API and the diagnostics
+// package. Defined as an interface so server tests need not import that pkg.
+type DiagnosticsCollector interface {
+	Collect(ctx context.Context) (any, error)
+}
 
 // Server is the local admin HTTP server.
 type Server struct {
-	handler    *http.ServeMux
-	httpServer *http.Server
-	csrfToken  string
-	port       int
+	deps      Deps
+	mu        sync.Mutex
+	csrfToken string
+	mux       *http.ServeMux
+	httpSrv   *http.Server
+	listener  net.Listener
+	tmpl      *template.Template
+
+	activityProvider func() []ActivityEntry
+	healthProvider   func() []AdapterChip
 }
 
-// Deps holds the dependencies injected into the server.
-type Deps struct {
-	DB          interface{} // *sql.DB, used by handlers
-	Diagnostics interface{} // *diagnostics.Collector
-	Port        int
-}
-
-// New creates a new admin API server.
+// New creates a fully wired admin server.
 func New(deps Deps) (*Server, error) {
 	tok, err := generateCSRFToken()
 	if err != nil {
-		return nil, fmt.Errorf("api: generate csrf token: %w", err)
+		return nil, fmt.Errorf("api: generate csrf: %w", err)
 	}
-	port := deps.Port
-	if port == 0 {
-		port = defaultPort
+	if deps.Port == 0 {
+		deps.Port = DefaultPort
+	}
+	if deps.BindAddr == "" {
+		deps.BindAddr = "127.0.0.1"
+	}
+	if deps.Version == "" {
+		deps.Version = "0.6.0-phase6"
+	}
+	tmpl, err := loadTemplates()
+	if err != nil {
+		return nil, fmt.Errorf("api: load templates: %w", err)
 	}
 	s := &Server{
-		handler:   http.NewServeMux(),
+		deps:      deps,
 		csrfToken: tok,
-		port:      port,
+		mux:       http.NewServeMux(),
+		tmpl:      tmpl,
 	}
-	s.registerRoutes(deps)
+	s.registerRoutes()
 	return s, nil
 }
 
-// CSRFToken returns the token callers must send in X-ReadSync-CSRF for writes.
-func (s *Server) CSRFToken() string { return s.csrfToken }
+func loadTemplates() (*template.Template, error) {
+	t := template.New("readsync")
+	entries, err := fs.ReadDir(templatesFS, "templates")
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		data, err := templatesFS.ReadFile("templates/" + e.Name())
+		if err != nil {
+			return nil, err
+		}
+		if _, err := t.New(e.Name()).Parse(string(data)); err != nil {
+			return nil, fmt.Errorf("parse %s: %w", e.Name(), err)
+		}
+	}
+	return t, nil
+}
 
-// Start begins listening on 127.0.0.1:<port>.
+// CSRFToken returns the current per-session token.
+func (s *Server) CSRFToken() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.csrfToken
+}
+
+// SetActivityProvider registers a callback returning recent activity log entries.
+func (s *Server) SetActivityProvider(fn func() []ActivityEntry) {
+	s.activityProvider = fn
+}
+
+// SetHealthProvider registers a callback returning adapter freshness chips.
+func (s *Server) SetHealthProvider(fn func() []AdapterChip) {
+	s.healthProvider = fn
+}
+
+// Addr returns the actual listening address (useful in tests).
+func (s *Server) Addr() string {
+	if s.listener == nil {
+		return ""
+	}
+	return s.listener.Addr().String()
+}
+
+// Handler exposes the underlying mux for integration tests.
+func (s *Server) Handler() http.Handler { return s.mux }
+
+// Start begins listening. Non-blocking: serves in a goroutine.
 func (s *Server) Start(ctx context.Context) error {
-	addr := fmt.Sprintf("127.0.0.1:%d", s.port)
+	addr := fmt.Sprintf("%s:%d", s.deps.BindAddr, s.deps.Port)
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("api.Start: %w", err)
 	}
-	s.httpServer = &http.Server{
-		Handler:      s.handler,
+	s.listener = ln
+	s.httpSrv = &http.Server{
+		Handler:      s.mux,
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 	go func() {
-		_ = s.httpServer.Serve(ln)
+		if s.deps.TLSCert != nil {
+			s.httpSrv.TLSConfig = &tls.Config{Certificates: []tls.Certificate{*s.deps.TLSCert}}
+			_ = s.httpSrv.ServeTLS(ln, "", "")
+			return
+		}
+		_ = s.httpSrv.Serve(ln)
 	}()
 	go func() {
 		<-ctx.Done()
 		shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_ = s.httpServer.Shutdown(shutCtx)
+		_ = s.httpSrv.Shutdown(shutCtx)
 	}()
 	return nil
 }
 
 // Stop shuts down the server gracefully.
 func (s *Server) Stop() error {
-	if s.httpServer == nil {
+	if s.httpSrv == nil {
 		return nil
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return s.httpServer.Shutdown(ctx)
-}
-
-func (s *Server) registerRoutes(deps Deps) {
-	s.handler.HandleFunc("/healthz", s.handleHealthz)
-	s.handler.HandleFunc("/status", s.handleStatus)
-	s.handler.HandleFunc("/adapters", s.handleAdapters)
-	s.handler.HandleFunc("/conflicts", s.handleConflicts)
-	s.handler.HandleFunc("/outbox", s.handleOutbox)
-	s.handler.HandleFunc("/events", s.handleEvents)
-}
-
-// csrfMiddleware checks the CSRF token on non-GET requests.
-func (s *Server) csrfMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			tok := r.Header.Get(csrfHeader)
-			if tok != s.csrfToken {
-				http.Error(w, `{"error":"invalid csrf token"}`, http.StatusForbidden)
-				return
-			}
-		}
-		next(w, r)
-	}
+	return s.httpSrv.Shutdown(ctx)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -122,40 +200,8 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "ts": time.Now().UTC().Format(time.RFC3339)})
-}
-
-func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"service": "readsync",
-		"status":  "running",
-		"ts":      time.Now().UTC().Format(time.RFC3339),
-	})
-}
-
-func (s *Server) handleAdapters(w http.ResponseWriter, r *http.Request) {
-	// TODO Phase 2: query adapter_health table.
-	writeJSON(w, http.StatusOK, map[string]any{"adapters": []any{}})
-}
-
-func (s *Server) handleConflicts(w http.ResponseWriter, r *http.Request) {
-	// TODO Phase 2: query conflicts table.
-	writeJSON(w, http.StatusOK, map[string]any{"conflicts": []any{}})
-}
-
-func (s *Server) handleOutbox(w http.ResponseWriter, r *http.Request) {
-	// TODO Phase 2: query sync_outbox table.
-	writeJSON(w, http.StatusOK, map[string]any{"outbox": []any{}})
-}
-
-func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
-	// TODO Phase 2: query progress_events table.
-	writeJSON(w, http.StatusOK, map[string]any{"events": []any{}})
-}
-
 func generateCSRFToken() (string, error) {
-	b := make([]byte, 16)
+	b := make([]byte, 24)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}

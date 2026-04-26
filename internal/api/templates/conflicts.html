@@ -1,0 +1,39 @@
+{{define "content"}}
+<h1>Conflicts</h1>
+
+<p>Click a conflict to choose the winning event or pin a source.</p>
+
+{{if .Conflicts}}
+<table class="rs-table rs-conflicts">
+    <thead><tr>
+        <th>ID</th><th>Book</th><th>Reason</th><th>Detected</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+    {{range .Conflicts}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.BookTitle}}</td>
+        <td>{{.Reason}}</td>
+        <td>{{.DetectedAt}}</td>
+        <td>{{.Status}}</td>
+        <td>
+            {{if eq .Status "open"}}
+            <button hx-post="/api/conflicts/{{.ID}}/resolve?winner=a"
+                    hx-headers='{"X-ReadSync-CSRF":"{{$.CSRFToken}}"}'
+                    hx-swap="none">Pick A</button>
+            <button hx-post="/api/conflicts/{{.ID}}/resolve?winner=b"
+                    hx-headers='{"X-ReadSync-CSRF":"{{$.CSRFToken}}"}'
+                    hx-swap="none">Pick B</button>
+            <button hx-post="/api/conflicts/{{.ID}}/dismiss"
+                    hx-headers='{"X-ReadSync-CSRF":"{{$.CSRFToken}}"}'
+                    hx-swap="none">Dismiss</button>
+            {{end}}
+        </td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+{{else}}
+<p class="rs-empty">No conflicts. Sync state is consistent across all sources.</p>
+{{end}}
+{{end}}

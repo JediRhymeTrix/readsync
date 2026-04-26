@@ -1,0 +1,44 @@
+{{define "content"}}
+<h1>Dashboard</h1>
+
+<section class="rs-section">
+    <h2>Adapters</h2>
+    <div class="rs-chip-grid">
+        {{range .Adapters}}
+        <div class="rs-chip" data-state="{{.State}}">
+            <strong>{{.Source}}</strong>
+            <span class="rs-chip-state">{{.State}}</span>
+            <span class="rs-chip-freshness">{{.Freshness}}</span>
+            {{if .LastError}}<span class="rs-chip-err">{{.LastError}}</span>{{end}}
+        </div>
+        {{else}}
+        <p>No adapters registered yet.</p>
+        {{end}}
+    </div>
+</section>
+
+<section class="rs-section">
+    <h2>Activity</h2>
+    <div class="rs-actions">
+        <button hx-post="/api/sync_now" hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}' hx-swap="none">
+            Sync now
+        </button>
+        <button hx-post="/api/restart_service" hx-headers='{"X-ReadSync-CSRF":"{{.CSRFToken}}"}' hx-confirm="Restart the ReadSync service?" hx-swap="none">
+            Restart service
+        </button>
+        <a href="/ui/activity" class="rs-btn">View activity log</a>
+    </div>
+</section>
+
+<section class="rs-section">
+    <h2>Outbox snapshot</h2>
+    <table class="rs-table">
+        <thead><tr><th>Status</th><th>Count</th></tr></thead>
+        <tbody>
+        {{range $status, $count := .OutboxStats}}
+            <tr><td>{{$status}}</td><td>{{$count}}</td></tr>
+        {{end}}
+        </tbody>
+    </table>
+</section>
+{{end}}

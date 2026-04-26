@@ -1,7 +1,6 @@
-﻿// cmd/readsync-service/main_service.go
+// cmd/readsync-service/main_service.go
 //
 // ReadSync Windows Service entry point.
-// This file contains the actual implementation; main.go is left for reference.
 
 package main
 
@@ -18,15 +17,18 @@ import (
 	"github.com/readsync/readsync/internal/api"
 	"github.com/readsync/readsync/internal/core"
 	"github.com/readsync/readsync/internal/db"
+	"github.com/readsync/readsync/internal/diagnostics"
 	"github.com/readsync/readsync/internal/logging"
+	"github.com/readsync/readsync/internal/repair"
 	"github.com/readsync/readsync/internal/secrets"
+	"github.com/readsync/readsync/internal/setup"
 )
 
 const (
 	serviceName2        = "ReadSync"
 	serviceDisplayName2 = "ReadSync Book Sync Service"
 	serviceDescription2 = "Keeps reading progress in sync across Calibre, KOReader, Moon+, and Goodreads."
-	version2            = "0.1.0-phase3"
+	version2            = "0.6.0-phase6"
 )
 
 type program2 struct {
@@ -42,6 +44,14 @@ func (p *program2) Start(s service.Service) error {
 	p.done = make(chan struct{})
 	go p.runService2(ctx)
 	return nil
+}
+
+// diagnosticsAdapter wraps the diagnostics.Collector so it satisfies the
+// api.DiagnosticsCollector interface (which uses `any` for the report).
+type diagnosticsAdapter struct{ inner *diagnostics.Collector }
+
+func (d diagnosticsAdapter) Collect(ctx context.Context) (any, error) {
+	return d.inner.Collect(ctx)
 }
 
 func (p *program2) runService2(ctx context.Context) {
@@ -67,7 +77,37 @@ func (p *program2) runService2(ctx context.Context) {
 	pipeline := core.NewPipeline(database.SQL(), logger)
 	go pipeline.Run(ctx)
 
-	apiServer, err := api.New(api.Deps{Port: 7201})
+	// Setup wizard (phase 6) - file-backed, persists between runs.
+	wizardPath := filepath.Join(filepath.Dir(dbPath), "wizard.json")
+	wizard, werr := setup.NewWithPath(wizardPath)
+	if werr != nil {
+		logger.Error("wizard init failed", logging.F("error", werr))
+	}
+
+	// Diagnostics collector.
+	diag := diagnostics.New(database.SQL(), version2)
+
+	// Secrets store: Windows DPAPI in production, EnvStore in dev.
+	secretsStore := secrets.NewChainStore(secrets.PlatformStore(), &secrets.EnvStore{})
+
+	// Wire repair-action callbacks the API exposes via /api/sync_now etc.
+	api.SetRestartHook(func() error {
+		res := repair.RestartService()
+		if !res.OK {
+			return fmt.Errorf("%s", res.Message)
+		}
+		return nil
+	})
+	api.SetSyncTrigger(syncTriggerStub{})
+	api.SetSecretsStore(secretsStore)
+
+	apiServer, err := api.New(api.Deps{
+		DB:          database.SQL(),
+		Wizard:      wizard,
+		Diagnostics: diagnosticsAdapter{inner: diag},
+		Version:     version2,
+		Port:        7201,
+	})
 	if err != nil {
 		logger.Error("api init failed", logging.F("error", err))
 		return
@@ -81,14 +121,14 @@ func (p *program2) runService2(ctx context.Context) {
 	koreaderAdapter := koreader.New(koreader.DefaultConfig(), database.SQL(), logger)
 	koreaderAdapter.SetPipeline(pipeline)
 	if err := koreaderAdapter.Start(ctx); err != nil {
-		// Non-fatal: log and continue â€” KOReader sync unavailable but service runs.
 		logger.Error("koreader adapter start failed", logging.F("error", err))
 	}
-	// Start Moon+ Reader Pro adapter (embedded WebDAV server, Phase 4).
+
+	// Start Moon+ Reader Pro adapter (Phase 4).
 	moonCfg := moon.Defaults()
 	moonCfg.WebDAV.DataDir = filepath.Join(filepath.Dir(dbPath), "moon")
 	moonCfg.WebDAV.BindAddr = "0.0.0.0:8765"
-	moonAdapter, mErr := moon.New(moonCfg, database.SQL(), logger, &secrets.EnvStore{})
+	moonAdapter, mErr := moon.New(moonCfg, database.SQL(), logger, secretsStore)
 	if mErr != nil {
 		logger.Error("moon adapter init failed", logging.F("error", mErr))
 	} else {
@@ -98,10 +138,17 @@ func (p *program2) runService2(ctx context.Context) {
 		}
 	}
 
-	logger.Info("ReadSync service ready")
+	logger.Info("ReadSync service ready",
+		logging.F("admin_url", "http://127.0.0.1:7201"))
 	<-ctx.Done()
 	logger.Info("ReadSync service stopping")
 }
+
+// syncTriggerStub is a no-op SyncTrigger used until adapters expose a
+// real one. Returning nil keeps /api/sync_now happy.
+type syncTriggerStub struct{}
+
+func (syncTriggerStub) TriggerSync() error { return nil }
 
 func (p *program2) Stop(_ service.Service) error {
 	if p.cancel != nil {

@@ -124,3 +124,36 @@ run:
 replay-koreader-live:
 	bash fixtures/koreader/curl-replay.sh http://localhost:7200
 
+# ─── Phase 6 user-facing surface ─────────────────────────────────────────────
+
+## test-phase6: Run Phase 6 unit tests (no CGO required).
+test-phase6:
+	go test -count=1 -timeout 60s \
+	  ./internal/setup/... \
+	  ./internal/repair/... \
+	  ./internal/secrets/... \
+	  ./internal/api/... \
+	  ./cmd/readsync-tray/...
+
+## run-fakeserver: Start the fake admin UI for Playwright E2E.
+run-fakeserver:
+	go run ./tests/fakeserver -port 7201
+
+## test-e2e: Run Playwright wizard suite (requires npm + chromium).
+test-e2e:
+	cd tests && npm install && npx playwright install chromium && npx playwright test wizard.spec.js
+
+## installer: Build binaries + invoke ISCC. Requires Inno Setup 6.
+installer:
+	@mkdir -p bin
+	go build -ldflags="-H windowsgui" -o bin/readsync-tray.exe ./cmd/readsync-tray
+	go build -o bin/readsync-service.exe ./cmd/readsync-service
+	iscc installer/readsync.iss
+
+## smoke-installer: Run the installer smoke test (admin PowerShell).
+smoke-installer:
+	powershell -ExecutionPolicy Bypass -File installer/smoke.ps1 \
+	  -Installer dist/ReadSync-0.6.0-setup.exe
+
+
+

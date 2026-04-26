@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{.CSRFToken}}">
+    <title>{{.Title}} - ReadSync</title>
+    <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="rs-header">
+    <a href="/ui/dashboard" class="rs-logo">ReadSync</a>
+    <nav>
+        <a href="/ui/dashboard">Dashboard</a>
+        <a href="/ui/wizard">Setup</a>
+        <a href="/ui/conflicts">Conflicts</a>
+        <a href="/ui/outbox">Outbox</a>
+        <a href="/ui/activity">Activity</a>
+        <a href="/ui/repair">Repair</a>
+    </nav>
+    <div class="rs-status-pill" data-state="{{.OverallHealth}}">{{.OverallHealth}}</div>
+</header>
+<main class="rs-main">
+{{template "content" .}}
+</main>
+<footer class="rs-footer">
+    <span>ReadSync v{{.Version}}</span>
+    <span>Bound to 127.0.0.1 - admin UI is local-only</span>
+</footer>
+</body>
+</html>
