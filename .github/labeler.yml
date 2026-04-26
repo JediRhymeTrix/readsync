@@ -1,0 +1,90 @@
+# Path-based PR auto-labeler rules for ReadSync.
+# Consumed by actions/labeler@v5 via .github/workflows/labeler.yml
+# Label names must match entries in .github/labels.yml
+
+bug:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["**/*_test.go", "tests/**"]
+
+feature:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["internal/**", "cmd/**"]
+
+enhancement:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["internal/**", "cmd/**"]
+
+documentation:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+          - "*.md"
+          - "docs/**"
+          - ".github/**/*.md"
+
+ci:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+          - ".github/dependabot.yml"
+
+build:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+          - "Makefile"
+          - "installer/**"
+          - "scripts/**"
+
+dependencies:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+          - "go.mod"
+          - "go.sum"
+          - "tests/package.json"
+          - "tests/package-lock.json"
+
+security:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+          - "internal/api/**"
+          - "internal/secrets/**"
+          - "tests/security/**"
+          - "SECURITY.md"
+
+database:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+          - "internal/db/**"
+
+adapter/koreader:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["internal/adapters/koreader/**"]
+
+adapter/moon:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["internal/adapters/moon/**"]
+
+adapter/calibre:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["internal/adapters/calibre/**"]
+
+adapter/goodreads:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["internal/adapters/goodreads/**"]
+
+installer:
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ["installer/**", "dist/**"]

@@ -1,0 +1,128 @@
+name: "🐛 Bug Report"
+description: "Report a defect or unexpected behaviour in ReadSync."
+title: "[Bug]: "
+labels:
+  - "bug"
+  - "needs-triage"
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill in the
+        sections below so we can reproduce and fix the issue quickly.
+
+        > **Security issues?** Please use the [responsible disclosure
+        > process](../SECURITY.md) instead of opening a public issue.
+
+  - type: input
+    id: readsync-version
+    attributes:
+      label: "ReadSync Version"
+      description: "Version shown in the tray icon tooltip or `readsyncctl status`."
+      placeholder: "e.g. 0.7.0"
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: "Windows Version"
+      description: "Run `winver` and paste the result (e.g. Windows 11 23H2 22631.3235)."
+      placeholder: "Windows 11 23H2 22631.xxxx"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Affected Component"
+      description: "Which part of ReadSync is failing?"
+      options:
+        - "KOReader adapter (port 7200)"
+        - "Moon+ WebDAV adapter (port 8765)"
+        - "Calibre adapter"
+        - "Goodreads bridge"
+        - "Admin UI / Setup Wizard"
+        - "Windows Service (install/start/stop)"
+        - "Conflict resolution"
+        - "Outbox / retry logic"
+        - "Diagnostics / logging"
+        - "Installer (readsync-setup.exe)"
+        - "CLI (readsyncctl)"
+        - "Other / unknown"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Bug Description"
+      description: "Clear and concise description of the bug."
+      placeholder: "When I push from KOReader, the progress is not saved..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Exact steps to trigger the bug."
+      placeholder: |
+        1. Open KOReader on device X
+        2. Read to page 45 of 'Book Title'
+        3. Trigger sync
+        4. Check Calibre — progress shows 0%
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Behaviour"
+      description: "What should happen?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "Actual Behaviour"
+      description: "What actually happens? Include any error messages."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Relevant Logs"
+      description: |
+        Paste relevant lines from:
+        - `%APPDATA%\ReadSync\logs\activity.log`
+        - `%APPDATA%\ReadSync\logs\readsync.jsonl`
+        - Windows Event Viewer → Application → ReadSync
+
+        **Strip any credentials or API tokens before pasting.**
+      render: text
+
+  - type: textarea
+    id: diagnostic-bundle
+    attributes:
+      label: "Diagnostic Bundle (optional)"
+      description: |
+        If you can export a diagnostic bundle via the Admin UI
+        (Diagnostics → Export Bundle), attach or paste the summary section.
+        See [docs/diagnostic-bundle.md](../docs/diagnostic-bundle.md).
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Pre-submission Checklist"
+      options:
+        - label: "I have searched existing issues and this is not a duplicate."
+          required: true
+        - label: "I am running the latest ReadSync release."
+          required: false
+        - label: "I have removed credentials/secrets from all pasted content."
+          required: true

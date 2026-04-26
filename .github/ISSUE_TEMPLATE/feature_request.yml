@@ -1,0 +1,77 @@
+name: "🚀 Feature Request"
+description: "Propose a new feature or improvement for ReadSync."
+title: "[Feature]: "
+labels:
+  - "enhancement"
+  - "needs-triage"
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement! Please provide as much
+        context as possible so we can evaluate and prioritise the request.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Target Component"
+      description: "Which part of ReadSync would this feature affect?"
+      options:
+        - "KOReader adapter"
+        - "Moon+ WebDAV adapter"
+        - "Calibre adapter"
+        - "Goodreads bridge"
+        - "Admin UI / Setup Wizard"
+        - "Windows Service"
+        - "Conflict resolution engine"
+        - "Outbox / retry logic"
+        - "Diagnostics / logging"
+        - "Installer"
+        - "CLI (readsyncctl)"
+        - "New adapter / integration"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem / Motivation"
+      description: |
+        What problem does this feature solve?
+        Is your feature request related to a specific workflow or use case?
+      placeholder: "I'm frustrated when... / I need to be able to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe the solution you'd like, including any API or UX ideas."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "Are there workarounds or alternative solutions you've tried?"
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Mockups, related issues, external references, or prior art."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Pre-submission Checklist"
+      options:
+        - label: "I have searched existing issues and discussions — this is not a duplicate."
+          required: true
+        - label: "I am willing to help implement this feature (optional)."
+          required: false

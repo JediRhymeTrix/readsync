@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: "ci-${{ github.ref }}"
+  cancel-in-progress: true
+
+
 jobs:
   # ─── Phase 0 tools ────────────────────────────────────────────────────────
   tools:
@@ -91,9 +99,20 @@ jobs:
           GOARCH: amd64
           CC: x86_64-w64-mingw32-gcc
         run: go build -v -o bin/readsyncctl.exe ./cmd/readsyncctl/
+
+      - name: Build readsync-tray.exe
+        env:
+          CGO_ENABLED: "1"
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: go build -v -trimpath -ldflags="-H windowsgui" -o bin/readsync-tray.exe ./cmd/readsync-tray/
+
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-binaries
+          retention-days: 14
           path: bin/*.exe
 
   # ─── Phase 7 QA & Hardening ─────────────────────────────────────────────────

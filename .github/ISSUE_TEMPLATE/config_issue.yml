@@ -1,0 +1,98 @@
+name: "⚙️ Configuration Problem"
+description: "Report a configuration issue — wizard failure, adapter not connecting, credentials rejected, etc."
+title: "[Config]: "
+labels:
+  - "configuration"
+  - "needs-triage"
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template if you're stuck during setup or an adapter
+        refuses to connect. For crashes or data-loss bugs, use the
+        **Bug Report** template instead.
+
+  - type: input
+    id: readsync-version
+    attributes:
+      label: "ReadSync Version"
+      placeholder: "e.g. 0.7.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: wizard-step
+    attributes:
+      label: "Setup Wizard Step (if applicable)"
+      description: "Which wizard step is failing? Select 'N/A' if not wizard-related."
+      options:
+        - "N/A — not wizard-related"
+        - "Step 1 — Welcome"
+        - "Step 2 — System Scan"
+        - "Step 3 — Calibre"
+        - "Step 4 — Goodreads Bridge"
+        - "Step 5 — KOReader"
+        - "Step 6 — Moon+"
+        - "Step 7 — Conflict Policy"
+        - "Step 8 — Test Sync"
+        - "Step 9 — Diagnostics"
+        - "Step 10 — Finish"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: adapter
+    attributes:
+      label: "Affected Adapter"
+      options:
+        - "N/A"
+        - "KOReader (KOSync, port 7200)"
+        - "Moon+ Pro (WebDAV, port 8765)"
+        - "Calibre"
+        - "Goodreads bridge"
+        - "Multiple / all"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "What is the configuration problem?"
+      description: "Describe what you expected to happen and what actually happens."
+    validations:
+      required: true
+
+  - type: textarea
+    id: config-snapshot
+    attributes:
+      label: "Configuration Snapshot (sanitised)"
+      description: |
+        Paste any relevant configuration from the Admin UI or
+        `%APPDATA%\ReadSync\config.json`.
+
+        **Replace all passwords, tokens, and IP addresses with placeholders.**
+      render: json
+
+  - type: textarea
+    id: error-message
+    attributes:
+      label: "Error Message / Log Snippet"
+      description: |
+        Paste error messages from the Admin UI, `activity.log`, or
+        Windows Event Viewer.  
+        **Remove all credentials before pasting.**
+      render: text
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Pre-submission Checklist"
+      options:
+        - label: "I have removed all credentials and secrets from pasted content."
+          required: true
+        - label: "I have checked the README setup walkthrough."
+          required: true
+        - label: "I have searched existing issues for similar configuration problems."
+          required: true

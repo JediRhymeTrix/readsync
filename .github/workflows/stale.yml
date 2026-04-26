@@ -1,0 +1,58 @@
+name: Stale Issues and PRs
+
+on:
+  schedule:
+    # Run daily at 01:00 UTC
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark and close stale items
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # ── Stale issues ──────────────────────────────────────────────────
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-label: "stale"
+          close-issue-label: "closed-stale"
+          stale-issue-message: >
+            This issue has had no activity for 60 days and has been marked
+            as stale. It will be closed automatically in 14 days unless
+            there is further activity. If this is still relevant, please
+            comment or remove the `stale` label.
+          close-issue-message: >
+            This issue was closed automatically after 14 days of inactivity
+            following the stale notice. Please open a new issue if the
+            problem persists.
+
+          # ── Stale PRs ─────────────────────────────────────────────────────
+          days-before-pr-stale: 30
+          days-before-pr-close: 14
+          stale-pr-label: "stale"
+          close-pr-label: "closed-stale"
+          stale-pr-message: >
+            This pull request has had no activity for 30 days and has been
+            marked as stale. It will be closed automatically in 14 days
+            unless there is further activity. If you're still working on
+            this, please push an update or remove the `stale` label.
+          close-pr-message: >
+            This pull request was closed automatically after 14 days of
+            inactivity following the stale notice. Feel free to reopen
+            when you're ready to continue.
+
+          # ── Exemptions ────────────────────────────────────────────────────
+          exempt-issue-labels: "pinned,security,breaking,help-wanted,good-first-issue"
+          exempt-pr-labels: "pinned,security,breaking,work-in-progress"
+
+          # Don't close issues/PRs labelled with these; only mark stale
+          close-issue-reason: "not_planned"
+          operations-per-run: 100

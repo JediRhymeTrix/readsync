@@ -1,0 +1,18 @@
+# ReadSync funding configuration
+# Displayed on the repository "Sponsor" button.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# Uncomment and fill in the relevant platforms when ready.
+
+# github: []                 # GitHub Sponsors username(s)
+# patreon: ""                # Patreon username
+# open_collective: ""        # Open Collective slug
+# ko_fi: ""                  # Ko-fi username
+# liberapay: ""              # Liberapay username
+# issuehunt: ""              # IssueHunt username
+# community_bridge: ""       # LFX Community Bridge project name
+# tidelift: ""               # Tidelift "platform/package" e.g. "npm/package"
+# polar: ""                  # Polar.sh username
+# buy_me_a_coffee: ""        # Buy Me a Coffee username
+
+custom: []

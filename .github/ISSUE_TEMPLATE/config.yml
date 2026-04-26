@@ -1,0 +1,20 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: "💬 General Discussion"
+    url: https://github.com/readsync/readsync/discussions
+    about: >
+      For questions about ReadSync, configuration help, or general
+      discussion — please use GitHub Discussions.
+
+  - name: "🔒 Security Vulnerability"
+    url: https://github.com/readsync/readsync/blob/main/SECURITY.md
+    about: >
+      To report a security vulnerability, please follow our responsible
+      disclosure process in SECURITY.md. Do NOT open a public issue.
+
+  - name: "📖 Documentation"
+    url: https://github.com/readsync/readsync/blob/main/docs
+    about: >
+      Browse the docs/ folder for protocol research, ADRs, and the QA
+      acceptance checklist.

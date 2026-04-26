@@ -1,0 +1,64 @@
+name: "❓ Question / Help"
+description: "Ask a question about configuring or using ReadSync."
+title: "[Question]: "
+labels:
+  - "question"
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening a question issue, please check:
+        - 📖 [README.md](../../README.md) — Setup walkthrough (5 steps)
+        - 📁 [docs/](../../docs/) — Protocol research, ADRs, diagnostics
+        - 💬 [Discussions](https://github.com/readsync/readsync/discussions)
+          — Community Q&A
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: "Question Topic"
+      options:
+        - "Installation / first-time setup"
+        - "KOReader configuration"
+        - "Moon+ Pro configuration"
+        - "Calibre configuration"
+        - "Goodreads bridge setup"
+        - "Admin UI / Setup Wizard"
+        - "Conflict resolution behaviour"
+        - "Diagnostics / logs"
+        - "Windows Service management"
+        - "CLI (readsyncctl) usage"
+        - "Building from source"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: "Your Question"
+      description: "What are you trying to do or understand?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Context"
+      description: |
+        - ReadSync version
+        - Windows version
+        - What you have already tried
+        - Relevant configuration (no passwords/secrets)
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Pre-submission Checklist"
+      options:
+        - label: "I have read the README and relevant docs before asking."
+          required: true
+        - label: "I have searched existing issues and discussions."
+          required: true

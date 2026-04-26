@@ -1,0 +1,165 @@
+# ReadSync repository labels
+# Managed by .github/workflows/labels.yml (EndBug/label-sync@v2)
+# Label names referenced by:
+#   - .github/labeler.yml       (path-based auto-labeller)
+#   - .github/release-drafter.yml  (SemVer bump resolver + categories)
+#   - .github/workflows/stale.yml  (exemptions)
+
+# ── Type ──────────────────────────────────────────────────────────────────────
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "feature"
+  color: "0075ca"
+  description: "New feature request"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "Improvement to an existing feature"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "chore"
+  color: "e4e669"
+  description: "Routine maintenance, cleanup, or housekeeping"
+
+- name: "refactor"
+  color: "e4e669"
+  description: "Code refactor without functional change"
+
+# ── Status ────────────────────────────────────────────────────────────────────
+- name: "help-wanted"
+  color: "008672"
+  description: "Extra attention is needed; community contributions welcome"
+
+- name: "good-first-issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "work-in-progress"
+  color: "fbca04"
+  description: "This PR is not ready for review yet"
+
+- name: "needs-triage"
+  color: "e11d48"
+  description: "Needs maintainer triage before work can begin"
+
+- name: "needs-repro"
+  color: "f9c513"
+  description: "Bug needs a reproduction case"
+
+- name: "stale"
+  color: "b0b0b0"
+  description: "No activity for 30–60 days; will be closed automatically"
+
+- name: "closed-stale"
+  color: "b0b0b0"
+  description: "Closed automatically due to inactivity"
+
+- name: "pinned"
+  color: "0052cc"
+  description: "Should not be marked stale"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+- name: "invalid"
+  color: "e4e669"
+  description: "This doesn't seem right"
+
+# ── SemVer bump ───────────────────────────────────────────────────────────────
+- name: "semver-major"
+  color: "d93f0b"
+  description: "Release Drafter: bumps MAJOR version (X.0.0)"
+
+- name: "semver-minor"
+  color: "e99695"
+  description: "Release Drafter: bumps MINOR version (x.Y.0)"
+
+- name: "semver-patch"
+  color: "f9d0c4"
+  description: "Release Drafter: bumps PATCH version (x.y.Z)"
+
+- name: "breaking"
+  color: "d93f0b"
+  description: "Introduces a breaking change (bumps MAJOR)"
+
+- name: "skip-changelog"
+  color: "eeeeee"
+  description: "Exclude this PR from the Release Drafter changelog"
+
+- name: "release"
+  color: "0052cc"
+  description: "Release management — exclude from changelog"
+
+# ── Area ──────────────────────────────────────────────────────────────────────
+- name: "area/ci"
+  color: "bfd4f2"
+  description: "CI/CD workflows and automation"
+
+- name: "ci"
+  color: "bfd4f2"
+  description: "CI/CD workflows and automation (alias)"
+
+- name: "build"
+  color: "bfd4f2"
+  description: "Build system (Makefile, installer, scripts)"
+
+- name: "security"
+  color: "ff0000"
+  description: "Security vulnerability or hardening"
+
+- name: "dependencies"
+  color: "0366d6"
+  description: "Dependency updates (go.mod, npm)"
+
+- name: "database"
+  color: "5319e7"
+  description: "SQLite schema, migrations, WAL mode"
+
+- name: "installer"
+  color: "c2e0c6"
+  description: "Inno Setup installer or distribution"
+
+- name: "adapter/koreader"
+  color: "b60205"
+  description: "KOSync adapter"
+
+- name: "adapter/moon"
+  color: "0e8a16"
+  description: "Moon+ WebDAV adapter"
+
+- name: "adapter/calibre"
+  color: "1d76db"
+  description: "Calibre adapter"
+
+- name: "adapter/goodreads"
+  color: "e4b429"
+  description: "Goodreads bridge adapter"
+
+# ── Platform ──────────────────────────────────────────────────────────────────
+- name: "platform/windows"
+  color: "006b75"
+  description: "Windows-specific issue or code"
+
+# ── Configuration (issue template) ────────────────────────────────────────────
+- name: "configuration"
+  color: "fbca04"
+  description: "Configuration question or issue"
+
+# ── Fix ───────────────────────────────────────────────────────────────────────
+- name: "fix"
+  color: "d73a4a"
+  description: "A fix/patch (alias for bug, contributes to semver-patch)"

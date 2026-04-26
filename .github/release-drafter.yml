@@ -1,0 +1,106 @@
+# Release Drafter configuration for ReadSync
+# GitHub Flow + SemVer: apply one of the labels below to a PR to control
+# which version component is bumped when the draft is promoted.
+#
+# Label → bump rules:
+#   breaking / semver-major  →  MAJOR (X.0.0)
+#   enhancement / semver-minor →  MINOR (x.Y.0)
+#   bug / fix / semver-patch  →  PATCH (x.y.Z)
+#
+# Docs: https://github.com/release-drafter/release-drafter
+
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+# SemVer bump resolution — first matching label wins
+version-resolver:
+  major:
+    labels:
+      - "breaking"
+      - "semver-major"
+  minor:
+    labels:
+      - "enhancement"
+      - "feature"
+      - "semver-minor"
+  patch:
+    labels:
+      - "bug"
+      - "fix"
+      - "security"
+      - "dependencies"
+      - "semver-patch"
+  default: patch
+
+# Categories rendered in the release body (order = render order)
+categories:
+  - title: "⚠️ Breaking Changes"
+    labels:
+      - "breaking"
+      - "semver-major"
+
+  - title: "🚀 Features"
+    labels:
+      - "enhancement"
+      - "feature"
+
+  - title: "🐛 Bug Fixes"
+    labels:
+      - "bug"
+      - "fix"
+
+  - title: "🔒 Security"
+    labels:
+      - "security"
+
+  - title: "⬆️ Dependencies"
+    labels:
+      - "dependencies"
+
+  - title: "📖 Documentation"
+    labels:
+      - "documentation"
+
+  - title: "🔧 Maintenance"
+    labels:
+      - "chore"
+      - "refactor"
+      - "ci"
+      - "build"
+
+# PRs that match these labels are excluded from the release notes
+exclude-labels:
+  - "skip-changelog"
+  - "release"
+
+# Template for the release body
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ---
+
+  **Full Changelog**: $PREVIOUS_TAG...v$RESOLVED_VERSION
+
+# Keep a draft open for the next release after each push to main
+autolabeler:
+  - label: "documentation"
+    files:
+      - "*.md"
+      - "docs/**"
+  - label: "ci"
+    files:
+      - ".github/workflows/**"
+      - ".github/dependabot.yml"
+  - label: "build"
+    files:
+      - "Makefile"
+      - "installer/**"
+      - "scripts/**"
+  - label: "dependencies"
+    files:
+      - "go.mod"
+      - "go.sum"
+      - "tests/package.json"
+      - "tests/package-lock.json"

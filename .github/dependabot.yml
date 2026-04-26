@@ -1,0 +1,141 @@
+version: 2
+
+updates:
+  # ── Go modules (main module) ───────────────────────────────────────────────
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(go)"
+      include: "scope"
+    open-pull-requests-limit: 10
+    groups:
+      golang-x:
+        patterns:
+          - "golang.org/x/*"
+      gin-stack:
+        patterns:
+          - "github.com/gin-gonic/*"
+          - "github.com/gin-contrib/*"
+    labels:
+      - "dependencies"
+      - "semver-patch"
+    reviewers:
+      - "readsync/core"
+    ignore:
+      # go-sqlite3 major bumps require CGO ABI verification — do manually
+      - dependency-name: "github.com/mattn/go-sqlite3"
+        update-types: ["version-update:semver-major"]
+
+  # ── Go modules (tools/koreader-sim) ───────────────────────────────────────
+  - package-ecosystem: "gomod"
+    directory: "/tools/koreader-sim"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(tools/koreader-sim)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "semver-patch"
+
+  # ── Go modules (tools/moon-fixture-recorder) ──────────────────────────────
+  - package-ecosystem: "gomod"
+    directory: "/tools/moon-fixture-recorder"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(tools/moon-recorder)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "semver-patch"
+
+  # ── Go modules (tools/generate-fixtures) ──────────────────────────────────
+  - package-ecosystem: "gomod"
+    directory: "/tools/generate-fixtures"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(tools/generate-fixtures)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "semver-patch"
+
+  # ── Go modules (tools/winsvc-spike) ───────────────────────────────────────
+  - package-ecosystem: "gomod"
+    directory: "/tools/winsvc-spike"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(tools/winsvc-spike)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "semver-patch"
+
+  # ── npm (tests/package.json) ───────────────────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/tests"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    open-pull-requests-limit: 5
+    groups:
+      playwright:
+        patterns:
+          - "@playwright/*"
+    labels:
+      - "dependencies"
+      - "semver-patch"
+
+  # ── GitHub Actions ────────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "UTC"
+    commit-message:
+      prefix: "deps(actions)"
+      include: "scope"
+    open-pull-requests-limit: 10
+    groups:
+      actions-core:
+        patterns:
+          - "actions/*"
+      github-actions:
+        patterns:
+          - "github/*"
+      third-party-actions:
+        patterns:
+          - "softprops/*"
+          - "EndBug/*"
+          - "release-drafter/*"
+    labels:
+      - "dependencies"
+      - "ci"
+      - "semver-patch"

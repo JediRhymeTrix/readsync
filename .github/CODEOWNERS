@@ -1,0 +1,44 @@
+# ReadSync CODEOWNERS
+# Format: <pattern>  <owner> [<owner2> ...]
+# Owners are notified automatically for review when a PR touches matching paths.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ── Catch-all: core team reviews everything ───────────────────────────────────
+*                                   @readsync/core
+
+# ── Go source ─────────────────────────────────────────────────────────────────
+*.go                                @readsync/core
+go.mod                              @readsync/core
+go.sum                              @readsync/core
+
+# ── Adapters ──────────────────────────────────────────────────────────────────
+internal/adapters/koreader/         @readsync/core
+internal/adapters/moon/             @readsync/core
+internal/adapters/calibre/          @readsync/core
+internal/adapters/goodreads/        @readsync/core
+
+# ── Core engine ───────────────────────────────────────────────────────────────
+internal/core/                      @readsync/core
+internal/conflicts/                 @readsync/core
+internal/resolver/                  @readsync/core
+internal/outbox/                    @readsync/core
+internal/db/                        @readsync/core
+
+# ── Security-sensitive paths ──────────────────────────────────────────────────
+internal/api/                       @readsync/core
+internal/secrets/                   @readsync/core
+tests/security/                     @readsync/core
+SECURITY.md                         @readsync/core
+
+# ── CI / GitHub automation ────────────────────────────────────────────────────
+.github/                            @readsync/core
+.github/workflows/                  @readsync/core
+.github/dependabot.yml              @readsync/core
+
+# ── Installer & distribution ──────────────────────────────────────────────────
+installer/                          @readsync/core
+dist/                               @readsync/core
+
+# ── Documentation ─────────────────────────────────────────────────────────────
+docs/                               @readsync/core
+*.md                                @readsync/core

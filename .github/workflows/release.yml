@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"        # v1.2.3
+      - "v[0-9]+.[0-9]+.[0-9]+-*"      # v1.2.3-rc.1
+
+permissions:
+  contents: write   # create release + upload assets
+
+jobs:
+  # ─── Build Windows release artefacts ─────────────────────────────────────
+  build-windows:
+    name: Build Windows binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for release-drafter tag resolution
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - name: Install Windows cross-compile toolchain
+        run: sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+
+      - name: Set version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build readsync-service.exe
+        env:
+          CGO_ENABLED: "1"
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: |
+          go build -v -trimpath \
+            -ldflags="-X github.com/readsync/readsync/internal/version.Version=${{ steps.version.outputs.VERSION }}" \
+            -o dist/readsync-service.exe ./cmd/readsync-service/
+
+      - name: Build readsyncctl.exe
+        env:
+          CGO_ENABLED: "1"
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: |
+          go build -v -trimpath \
+            -ldflags="-X github.com/readsync/readsync/internal/version.Version=${{ steps.version.outputs.VERSION }}" \
+            -o dist/readsyncctl.exe ./cmd/readsyncctl/
+
+      - name: Build readsync-tray.exe
+        env:
+          CGO_ENABLED: "1"
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: |
+          go build -v -trimpath \
+            -ldflags="-H windowsgui -X github.com/readsync/readsync/internal/version.Version=${{ steps.version.outputs.VERSION }}" \
+            -o dist/readsync-tray.exe ./cmd/readsync-tray/
+
+      - name: Create release archive
+        run: |
+          cd dist
+          zip "ReadSync-${{ github.ref_name }}-windows-amd64.zip" \
+            readsync-service.exe readsyncctl.exe readsync-tray.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ github.ref_name }}
+          path: dist/
+          retention-days: 7
+
+  # ─── Publish GitHub Release ───────────────────────────────────────────────
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-assets-${{ github.ref_name }}
+          path: dist/
+
+      - name: Compute SHA-256 checksums
+        run: |
+          cd dist
+          sha256sum *.zip *.exe > SHA256SUMS.txt
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Release Drafter will have pre-created a draft; this finalises it.
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
