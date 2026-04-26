@@ -1,0 +1,63 @@
+# ReadSync .gitignore
+# Generated during Phase 9 closeout.
+
+# ─── Go build artifacts ────────────────────────────────────────────────────────
+/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# ─── SQLite databases (local dev/test) ────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+readsync-dev.db
+test-output/
+
+# ─── Test output & coverage ───────────────────────────────────────────────────
+coverage.out
+coverage.html
+*.coverprofile
+
+# ─── Go dependency cache ──────────────────────────────────────────────────────
+# (go.sum IS committed; vendor/ is NOT used in this repo)
+vendor/
+
+# ─── Node / Playwright (tests/) ───────────────────────────────────────────────
+tests/node_modules/
+tests/playwright-report/
+tests/test-results/
+tests/package-lock.json
+
+# ─── Inno Setup build artefacts ───────────────────────────────────────────────
+dist/
+installer/Output/
+*.iss.bak
+
+# ─── OS / editor noise ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── Local worktree / Cline task scripts ──────────────────────────────────────
+commit-phase*.ps1
+
+# ─── TLS / dev certificates (auto-generated, never commit) ───────────────────
+*.pem
+*.crt
+*.key
+tls/
+
+# ─── Moon+ WebDAV local data ──────────────────────────────────────────────────
+data/
+
+# ─── Diagnostics export output ────────────────────────────────────────────────
+readsync-diagnostics/
+readsync-reports/

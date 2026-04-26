@@ -7,10 +7,15 @@ package koreader
 import (
 	"strings"
 
+	kocodec "github.com/readsync/readsync/internal/adapters/koreader/codec"
 	"github.com/readsync/readsync/internal/core"
 	"github.com/readsync/readsync/internal/model"
 	"github.com/readsync/readsync/internal/resolver"
 )
+
+// Ensure codec subpackage is compiled alongside the parent.
+// New code should call kocodec.LocatorType, kocodec.ToEvent, kocodec.CanonicalToPull.
+var _ = kocodec.LocatorType
 
 // pushRequest is the JSON body for PUT /syncs/progress.
 type pushRequest struct {

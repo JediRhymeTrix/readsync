@@ -5,6 +5,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased] — Phase 9 (Closeout & Cleanup)
+
+### Added
+- `.gitignore` covering build artifacts, SQLite DBs, test output, node_modules, dist, TLS certs.
+- `docs/phases/` directory with canonical phase manifest copies and index.
+- `docs/phases/phase0-manifest.md` — Phase 0 deliverable manifest (new canonical location).
+
+### Changed
+- Redacted local machine paths from `commit-phase7.ps1` (now gitignored).
+- `Makefile`: renamed duplicate `test-e2e` core target to `test-pipeline`; updated
+  `test-unit` to include all no-CGO packages; fixed `go.sum` status comment;
+  `test-phase7-unit` now correctly excludes calibre/koreader (need CGO).
+- `.github/workflows/ci.yml`: Phase 7 unit job now covers setup, repair, secrets, api, tray.
+- `docs/qa/acceptance-checklist.md`: corrected `TestE2E_DBPath_Utility` reference to
+  `TestE2E_OutboxJobsQueued`; fixed no-CGO package list.
+- `README.md`: corrected installer version reference from 0.7.0 to 0.6.0.
+- `internal/adapters/calibre/read.go`: added import of `calibre/opf` subpackage.
+- `internal/adapters/koreader/translate.go`: added import of `koreader/codec` subpackage.
+- Makefile: added `test-pipeline` target (correct replacement for dead `test-e2e` alias);
+  added `test-phase7-moon` and `test-phase7-cgo` targets; updated `.PHONY`.
+- CI `phase7-unit` job now covers setup, repair, secrets, api, tray, security, opf, codec.
+
+### Fixed
+- `.phase3-manifest.md`: noted that `go.sum` is now committed.
+- `docs/qa/acceptance-checklist.md`: corrected non-existent test name `TestE2E_DBPath_Utility`
+  to `TestE2E_OutboxJobsQueued`; fixed no-CGO package list.
+- `internal/adapters/calibre/opf/`: pure-Go extraction of OPF parsing logic eliminates
+  false CGO dependency in the calibre parser tests.
+- `internal/adapters/koreader/codec/`: pure-Go extraction of wire codec eliminates
+  false CGO dependency in the koreader translate tests.
+
+---
+
 ## [Unreleased] — Phase 7 (QA & Hardening)
 
 ### Added

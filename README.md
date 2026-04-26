@@ -19,7 +19,7 @@ between KOReader, Moon+ Reader Pro, Calibre, and Goodreads.
 
 ### Step 1 — Install
 
-Run `ReadSync-0.7.0-setup.exe` as Administrator. The installer:
+Run `ReadSync-0.6.0-setup.exe` (or latest release) as Administrator. The installer:
 1. Copies binaries to `%ProgramFiles%\ReadSync\`.
 2. Registers `ReadSync` Windows service with auto-start + crash recovery.
 3. Starts the service and launches the system tray icon.

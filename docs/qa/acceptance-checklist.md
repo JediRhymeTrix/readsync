@@ -62,7 +62,7 @@ Legend: ✅ = automated test | 📋 = manual verification documented | 🔧 = re
 
 ## AC-11: Service recovers after restart with no data loss
 - `db/migrations.go`: `PRAGMA journal_mode=WAL` (atomicity) ✅
-- `tests/integration/e2e_test.go TestE2E_DBPath_Utility` (WAL confirmed) ✅
+- `tests/integration/e2e_test.go TestE2E_OutboxJobsQueued` (DB persists after write; WAL mode confirmed via `db/migrations.go`) ✅
 - Outbox replay: jobs persist in DB; worker re-claims on restart 📋
 
 ## AC-12: Idle resource use negligible
@@ -94,8 +94,8 @@ To run all automated tests:
 ```powershell
 # Pure unit tests (no CGO required):
 go test -v ./internal/resolver/... ./internal/conflicts/... ./internal/logging/... `
-         ./internal/outbox/... ./internal/adapters/calibre/... `
-         ./internal/adapters/moon/... ./internal/adapters/koreader/...
+         ./internal/outbox/... ./internal/adapters/moon/... ` # NOTE: calibre/koreader need CGO; use test-integration for those
+         ./internal/setup/... ./internal/repair/... ./tests/security/...
 
 # CGO tests (requires GCC):
 go test -v -count=1 ./...

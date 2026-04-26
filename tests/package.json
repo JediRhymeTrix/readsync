@@ -4,7 +4,8 @@
     "version": "0.6.0",
     "description": "Playwright end-to-end tests for the ReadSync admin UI.",
     "scripts": {
-        "test": "playwright test"
+        "test": "playwright test",
+        "git-commit": "node git-commit.js"
     },
     "devDependencies": {
         "@playwright/test": "^1.45.0"

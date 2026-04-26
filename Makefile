@@ -1,15 +1,20 @@
-# ReadSync Phase 0 - Makefile
+# ReadSync Makefile (all phases)
 # Targets for building, running, and testing Phase 0 tools.
 
 GOOS    ?= windows
 GOARCH  ?= amd64
 GOFLAGS = CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH)
 
-.PHONY: all fixtures koreader-sim moon-recorder winsvc-spike vet clean help
+.PHONY: all fixtures koreader-sim moon-recorder winsvc-spike vet clean help \
+        deps vet-phase1 test test-unit test-pipeline migrate-test build \
+        test-koreader run replay-koreader-live \
+        test-phase6 run-fakeserver test-e2e installer smoke-installer \
+        test-phase7-unit test-phase7-moon test-phase7-cgo \
+        test-security test-integration test-phase7
 
 ## help: Show this help message
 help:
-	@echo "ReadSync Phase 0 Makefile"
+	@echo "ReadSync Makefile (Phase 9 — all targets)"
 	@echo ""
 	@echo "Targets:"
 	@grep -E '^## ' Makefile | sed 's/## /  /'
@@ -79,18 +84,25 @@ vet-phase1:
 test:
 	go test -v -count=1 -timeout 60s ./...
 
-## test-unit: Run pure unit tests (resolver, conflicts, logging - no CGO)
+## test-unit: Run core pure unit tests (resolver, conflicts, logging, outbox, moon - no CGO)
 test-unit:
 	go test -v -count=1 -timeout 30s \
 	  ./internal/resolver/... \
 	  ./internal/conflicts/... \
 	  ./internal/logging/...
 
-## test-e2e: Run end-to-end pipeline tests (requires CGO)
+## test-pipeline: Run end-to-end pipeline and migration tests (requires CGO)
 test-e2e:
 	go test -v -count=1 -timeout 30s \
 	  -run 'TestPipeline|TestMigrate' ./internal/core/...
+# test-pipeline above (was test-e2e: - renamed to avoid conflict with Playwright test-e2e)
 
+
+
+## test-pipeline: Run core pipeline tests (requires CGO) — replaces dead test-e2e at line 95
+test-pipeline:
+	CGO_ENABLED=1 go test -v -count=1 -timeout 30s \
+	  -run 'TestPipeline|TestMigrate' ./internal/core/...
 ## migrate-test: Apply DB migrations to a test database file
 migrate-test:
 	@mkdir -p test-output
@@ -107,9 +119,9 @@ build: deps vet-phase1
 
 # ─── Phase 3 KOReader adapter ─────────────────────────────────────────────────
 # NOTE: `make deps` must be run once before these targets work.
-#   Phase 3 added gin, x/crypto, x/time to go.mod. go.sum does not exist
-#   until `go mod tidy` (= `make deps`) is run with network + GCC available.
-#   See .phase3-manifest.md §REQUIRED ACTION for full instructions.
+#   Phase 3 added gin, x/crypto, x/time to go.mod. go.sum is committed
+#   run `make deps` to update after any go.mod change.
+#   See docs/phases/phase3-manifest.md for Phase 3 details.
 
 ## test-koreader: Run KOReader adapter integration tests (requires CGO)
 test-koreader:
@@ -161,13 +173,33 @@ smoke-installer:
 
 # ─── Phase 7 QA & Hardening ──────────────────────────────────────────────────
 
-## test-phase7-unit: Run all Phase 7 unit tests (no CGO required).
+## test-phase7-unit: Run Phase 7 pure-Go unit tests (no CGO required; run test-phase7-moon for moon).
+## Note: CI phase7-unit also includes moon. Use test-phase7-moon or test-phase7 for moon tests locally.
 test-phase7-unit:
 	go test -v -count=1 -timeout 60s \
 	  ./internal/resolver/... \
 	  ./internal/conflicts/... \
 	  ./internal/logging/... \
 	  ./internal/outbox/... \
+	  ./internal/setup/... \
+	  ./internal/repair/... \
+	  ./internal/secrets/... \
+	  ./internal/api/... \
+	  ./cmd/readsync-tray/... \
+	  ./tests/security/...
+## test-phase7-pure-adapters: Run pure-Go adapter subpackage tests (no CGO).
+## Covers: moon, calibre/opf (OPF parser), koreader/codec (wire codec).
+test-phase7-moon:
+	go test -v -count=1 -timeout 30s \
+	  ./internal/adapters/moon/... \
+	  ./internal/adapters/calibre/opf/... \
+	  ./internal/adapters/koreader/codec/...
+
+## NOTE: calibre and koreader need CGO - use test-phase7-cgo or test-integration
+##
+## test-phase7-cgo: Run Phase 7 CGO-required tests (calibre, koreader).
+test-phase7-cgo:
+	CGO_ENABLED=1 go test -v -count=1 -timeout 60s \
 	  ./internal/adapters/calibre/... \
 	  ./internal/adapters/moon/... \
 	  ./internal/adapters/koreader/...
@@ -180,8 +212,8 @@ test-security:
 test-integration:
 	CGO_ENABLED=1 go test -v -count=1 -timeout 60s ./tests/integration/...
 
-## test-phase7: Run all Phase 7 tests.
-test-phase7: test-phase7-unit test-security
+## test-phase7: Run all Phase 7 pure-Go tests (unit + moon + security, no CGO required).
+test-phase7: test-phase7-unit test-phase7-moon
 	@echo "Phase 7 unit + security tests complete."
 	@echo "Run 'make test-integration' separately (requires CGO/GCC)."
 

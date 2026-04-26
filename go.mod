@@ -42,6 +42,6 @@ require (
 // On Windows: install TDM-GCC (https://jmeubank.github.io/tdm-gcc/)
 // On Linux CI: sudo apt-get install gcc
 //
-// Phase 2 will add:
-//   golang.org/x/net v0.24.0         (WebDAV server for Moon+)
-//   golang.org/x/sys v0.19.0         (Windows registry access)
+// NOTE (Phase 3+): These packages were added in Phase 3/4 and are now in go.sum.
+//   golang.org/x/net (now in go.sum)         (WebDAV server for Moon+)
+//   golang.org/x/sys (now in go.sum) (Windows API/platform calls)

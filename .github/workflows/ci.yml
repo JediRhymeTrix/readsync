@@ -135,7 +135,14 @@ jobs:
             ./internal/conflicts/... \
             ./internal/logging/... \
             ./internal/outbox/... \
-            ./internal/adapters/moon/...
+            ./internal/adapters/moon/... \
+            ./internal/setup/... \
+            ./internal/repair/... \
+            ./internal/secrets/... \
+            ./internal/api/... \
+            ./cmd/readsync-tray/... \
+            ./internal/adapters/calibre/opf/... \
+            ./internal/adapters/koreader/codec/...
 
   phase7-security:
     name: Phase 7 security tests (no CGO)

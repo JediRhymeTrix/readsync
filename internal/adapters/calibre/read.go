@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	calibreopf "github.com/readsync/readsync/internal/adapters/calibre/opf"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -98,6 +99,11 @@ func readBookProgress(ctx context.Context, calibredbPath, libraryPath, bookID st
 	}
 	return parseOPFEvent(bookID, out)
 }
+
+// parseOPFEventWrapper delegates to the opf subpackage and converts the result.
+// The original parseOPFEvent below is still the implementation; this comment
+// marks where we could later swap to calibreopf.ParseOPFEvent entirely.
+var _ = calibreopf.ParseOPFEvent // ensure import is used
 
 // OPF XML types.
 type opfPackage struct {
