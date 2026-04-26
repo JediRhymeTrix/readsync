@@ -5,7 +5,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"time"
 )
@@ -95,10 +94,3 @@ func (s *Server) dropOutbox(w http.ResponseWriter, r *http.Request, id int64) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": n > 0, "rows": n})
 }
 
-// dbHandle is a minimal shim so handler files compile against either a
-// real *sql.DB or a test fake that implements ExecContext.
-type dbHandle interface {
-	ExecContext(ctx context.Context, q string, args ...any) (any, error)
-}
-
-var _ = dbHandle(nil) // keep the linter happy when no test fake registered

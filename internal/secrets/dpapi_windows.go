@@ -12,7 +12,6 @@
 package secrets
 
 import (
-	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -137,6 +136,3 @@ func (d *DPAPIStore) Delete(key string) error {
 func PlatformStore() Store {
 	return NewDPAPIStore()
 }
-
-// _ = errors satisfies the import when only used in error wrapping below.
-var _ = errors.New

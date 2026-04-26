@@ -6,6 +6,7 @@
 package api
 
 import (
+	"crypto/subtle"
 	"io/fs"
 	"net/http"
 	"time"
@@ -58,7 +59,11 @@ func (s *Server) csrf(next http.HandlerFunc) http.HandlerFunc {
 			if tok == "" {
 				tok = r.FormValue("csrf")
 			}
-			if tok != s.CSRFToken() {
+			expected := s.CSRFToken()
+			// Constant-time compare to avoid token-recovery via timing.
+			// subtle.ConstantTimeCompare returns 0 when lengths differ
+			// or content mismatches, so an empty token is rejected too.
+			if subtle.ConstantTimeCompare([]byte(tok), []byte(expected)) != 1 {
 				http.Error(w, `{"error":"invalid csrf token"}`, http.StatusForbidden)
 				return
 			}
