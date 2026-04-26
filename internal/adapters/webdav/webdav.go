@@ -167,6 +167,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Allow", "OPTIONS, PROPFIND, GET, PUT, DELETE, MKCOL, MOVE, LOCK, UNLOCK")
+	}
 	ctx := context.WithValue(r.Context(), userCtxKey{}, user)
 	s.handler.ServeHTTP(w, r.WithContext(ctx))
 }
