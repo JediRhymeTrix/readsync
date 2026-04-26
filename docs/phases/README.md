@@ -8,19 +8,24 @@ what was verified.
 |-------|----------|-------------|
 | 0 | [phase0-manifest.md](phase0-manifest.md) | Research, simulators, fixtures |
 | 1 | [phase1-manifest.md](phase1-manifest.md) | Core service skeleton |
+| 2 | [phase2-manifest.md](phase2-manifest.md) | Calibre adapter |
 | 3 | [phase3-manifest.md](phase3-manifest.md) | KOReader adapter |
 | 4 | [phase4-manifest.md](phase4-manifest.md) | Moon+ WebDAV adapter |
 | 5 | [phase5-manifest.md](phase5-manifest.md) | Goodreads bridge |
 | 6 | [phase6-manifest.md](phase6-manifest.md) | User-facing surface, installer, wizard |
 | 7 | [phase7-manifest.md](phase7-manifest.md) | QA & hardening, all 14 ACs |
+| 8 | _No standalone manifest_ | Integration stabilization and release preparation |
+| 9 | [phase9-manifest.md](phase9-manifest.md) | Closeout & cleanup |
+| 10 | _Documented below_ | Documentation & LLM-enablement sweep |
+| 11 | _Documented below_ | Final closeout & publishing |
 
-> Phase 2 had no separate manifest — deliverables are covered by phases 1 and 3.
+> Phase 8 had no separate manifest; its stabilization work is covered by surrounding phase records and the changelog.
 
 ---
 
 ## Phase 9 — Closeout & Cleanup
 
-See `.phase9-manifest.md` in the repo root for the full Phase 9 record.
+See [phase9-manifest.md](phase9-manifest.md) for the full Phase 9 record.
 
 Key Phase 9 deliverables:
 - `.gitignore` (new)
@@ -41,4 +46,11 @@ Key Phase 10 deliverables:
 - `llms.txt` — LLM-readable project index (per llmstxt.org spec)
 - `examples/` — runnable usage examples (API query, KOReader, Moon+ WebDAV, resolver, conflicts)
 - All public API reviewed for GoDoc completeness
+
+## Phase 11 — Final Closeout & Publishing
+
+Key Phase 11 deliverables:
+- `docs/github-push-prompt.md` — self-contained GitHub publishing prompt with repo creation, branch protection, Dependabot, CodeQL, labels, release, and Release Drafter commands
+- `llms.txt` — updated with the GitHub publishing prompt and phase index
+- Final verification sweep: `go vet`, formatter, spell-check, and CI context review
 
