@@ -20,8 +20,8 @@ jobs:
     name: Phase 0 tools
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
           cache: false
@@ -40,8 +40,8 @@ jobs:
     name: Phase 1 unit tests (no CGO)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
       - name: Download dependencies
@@ -60,8 +60,8 @@ jobs:
     name: Phase 1 integration tests (CGO + SQLite)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
       - name: Install GCC (for go-sqlite3 CGO)
@@ -77,8 +77,8 @@ jobs:
     name: Build Windows binaries (cross-compile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
       - name: Install Windows cross-compile toolchain
@@ -109,7 +109,7 @@ jobs:
         run: go build -v -trimpath -ldflags="-H windowsgui" -o bin/readsync-tray.exe ./cmd/readsync-tray/
 
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-binaries
           retention-days: 14
@@ -120,8 +120,8 @@ jobs:
     name: Phase 7 unit tests (no CGO)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
       - name: Download dependencies
@@ -148,8 +148,8 @@ jobs:
     name: Phase 7 security tests (no CGO)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
       - name: Download dependencies
@@ -163,8 +163,8 @@ jobs:
     name: Phase 7 integration tests (CGO)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
       - name: Install GCC

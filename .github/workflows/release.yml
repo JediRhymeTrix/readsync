@@ -15,11 +15,11 @@ jobs:
     name: Build Windows binaries
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0   # needed for release-drafter tag resolution
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.22"
           cache: true
@@ -73,7 +73,7 @@ jobs:
           zip "ReadSync-${{ github.ref_name }}-windows-amd64.zip" \
             readsync-service.exe readsyncctl.exe readsync-tray.exe
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-assets-${{ github.ref_name }}
           path: dist/
@@ -85,9 +85,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: release-assets-${{ github.ref_name }}
           path: dist/
