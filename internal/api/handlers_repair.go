@@ -6,11 +6,24 @@
 package api
 
 import (
+	"bytes"
+	"html/template"
 	"net/http"
 	"strings"
 
 	"github.com/readsync/readsync/internal/repair"
 )
+
+// repairSnippetTmpl renders a safe HTML snippet for repair action results.
+// html/template provides contextual auto-escaping of all interpolated values.
+var repairSnippetTmpl = template.Must(template.New("repair-snippet").Parse(
+	`<span class="{{.Class}}">{{.Body}}</span>`,
+))
+
+type repairSnippetData struct {
+	Class string
+	Body  string
+}
 
 // RepairAction lists the actions the UI exposes on /ui/repair.
 type RepairAction struct {
@@ -152,9 +165,14 @@ func (s *Server) renderRepairSnippet(w http.ResponseWriter, res repair.ActionRes
 	if !res.OK {
 		klass = "rs-status-error"
 	}
-	body := htmlEscape(res.Message)
+	body := res.Message
 	if res.Detail != "" {
-		body += "\n" + htmlEscape(res.Detail)
+		body += "\n" + res.Detail
 	}
-	_, _ = w.Write([]byte(`<span class="` + klass + `">` + body + `</span>`))
+	var buf bytes.Buffer
+	if err := repairSnippetTmpl.Execute(&buf, repairSnippetData{Class: klass, Body: body}); err != nil {
+		http.Error(w, "render error", http.StatusInternalServerError)
+		return
+	}
+	_, _ = w.Write(buf.Bytes())
 }

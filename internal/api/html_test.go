@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -259,5 +260,70 @@ func TestRepair_EnableKOReader_TraversalRejected(t *testing.T) {
 	}
 	if res.OK {
 		t.Error("enable_koreader with traversal config path should not succeed")
+// XSS prevention: wizard snippet must escape HTML in Message and Data fields.
+func TestWizardSnippet_XSSEscaping(t *testing.T) {
+	s := newTestServer(t)
+	attacks := []struct {
+		name  string
+		input string
+	}{
+		{"script tag", `<script>alert(1)</script>`},
+		{"img onerror", `"><img src=x onerror=alert(1)>`},
+		{"ampersand", `a & b`},
+		{"quotes", `"hello" & 'world'`},
+	}
+	for _, tc := range attacks {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			res := WizardRunResult{
+				OK:      false,
+				Message: tc.input,
+				Data:    map[string]any{"key": tc.input},
+			}
+			s.renderWizardSnippet(w, res)
+			body := w.Body.String()
+			if strings.Contains(body, tc.input) {
+				t.Errorf("raw payload %q leaked into HTML output:\n%s", tc.input, body)
+			}
+			// Verify no unescaped HTML tags appear in output.
+			if strings.Contains(body, "<script>") || strings.Contains(body, "<img ") {
+				t.Errorf("unescaped HTML tag in output:\n%s", body)
+			}
+		})
+	}
+}
+
+// XSS prevention: repair snippet must escape HTML in Message and Detail fields.
+func TestRepairSnippet_XSSEscaping(t *testing.T) {
+	s := newTestServer(t)
+	attacks := []struct {
+		name    string
+		message string
+		detail  string
+	}{
+		{"script in message", `<script>alert(1)</script>`, ""},
+		{"img in detail", "", `"><img src=x onerror=alert(1)>`},
+		{"both fields", `<b>msg</b>`, `<i>detail</i>`},
+		{"ampersand and quotes", `a & "b" & 'c'`, `x < y > z`},
+	}
+	for _, tc := range attacks {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			res := repair.ActionResult{OK: false, Message: tc.message, Detail: tc.detail}
+			s.renderRepairSnippet(w, res)
+			body := w.Body.String()
+			for _, raw := range []string{tc.message, tc.detail} {
+				if raw != "" && strings.Contains(body, raw) {
+					t.Errorf("raw payload %q leaked into HTML output:\n%s", raw, body)
+				}
+			}
+			// Verify no unescaped HTML tags appear in output.
+			if strings.Contains(body, "<script>") || strings.Contains(body, "<img ") ||
+				strings.Contains(body, "<b>") || strings.Contains(body, "<i>") {
+				t.Errorf("unescaped HTML tag in output:\n%s", body)
+			}
+		})
 	}
 }

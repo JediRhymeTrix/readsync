@@ -5,12 +5,30 @@
 package api
 
 import (
+	"bytes"
+	"html/template"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/readsync/readsync/internal/setup"
 )
+
+// wizardSnippetTmpl renders a safe HTML snippet for wizard run results.
+// html/template provides contextual auto-escaping of all interpolated values.
+var wizardSnippetTmpl = template.Must(template.New("wizard-snippet").Parse(
+	`<div class="rs-wizard-message {{.Class}}">{{.Message}}</div>` +
+		`{{if .DataItems}}<dl class="rs-data">` +
+		`{{range .DataItems}}<dt>{{.Key}}</dt><dd>{{.Val}}</dd>{{end}}` +
+		`</dl>{{end}}`,
+))
+
+type wizardSnippetData struct {
+	Class     string
+	Message   string
+	DataItems []struct{ Key, Val string }
+}
 
 // SyncTrigger is the contract for "sync now".
 type SyncTrigger interface {
@@ -87,17 +105,22 @@ func (s *Server) renderWizardSnippet(w http.ResponseWriter, res WizardRunResult)
 	if !res.OK {
 		klass = "rs-status-error"
 	}
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(`<div class="rs-wizard-message ` + klass + `">` +
-		htmlEscape(res.Message) + `</div>`))
-	if len(res.Data) > 0 {
-		_, _ = w.Write([]byte(`<dl class="rs-data">`))
-		for k, v := range res.Data {
-			_, _ = w.Write([]byte(
-				`<dt>` + htmlEscape(k) + `</dt><dd>` + htmlEscape(toString(v)) + `</dd>`))
-		}
-		_, _ = w.Write([]byte(`</dl>`))
+	data := wizardSnippetData{Class: klass, Message: res.Message}
+	keys := make([]string, 0, len(res.Data))
+	for k := range res.Data {
+		keys = append(keys, k)
 	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		data.DataItems = append(data.DataItems, struct{ Key, Val string }{k, toString(res.Data[k])})
+	}
+	var buf bytes.Buffer
+	if err := wizardSnippetTmpl.Execute(&buf, data); err != nil {
+		http.Error(w, "render error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(buf.Bytes())
 }
 
 func toString(v any) string {
@@ -118,13 +141,6 @@ func toString(v any) string {
 	default:
 		return ""
 	}
-}
-
-func htmlEscape(s string) string {
-	r := strings.NewReplacer(
-		"&", "&amp;", "<", "&lt;", ">", "&gt;",
-		`"`, "&quot;", "'", "&#39;")
-	return r.Replace(s)
 }
 
 func (s *Server) handleWizardComplete(w http.ResponseWriter, r *http.Request) {
