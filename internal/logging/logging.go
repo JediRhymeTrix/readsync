@@ -58,10 +58,10 @@ func New(activity, jsonl io.Writer, minLevel Level) *Logger {
 
 // entry is the JSON structure written to the JSONL stream.
 type entry struct {
-	TS      string            `json:"ts"`
-	Level   string            `json:"level"`
-	Msg     string            `json:"msg"`
-	Fields  map[string]any    `json:"fields,omitempty"`
+	TS     string         `json:"ts"`
+	Level  string         `json:"level"`
+	Msg    string         `json:"msg"`
+	Fields map[string]any `json:"fields,omitempty"`
 }
 
 // Info logs a human-readable message at INFO level.

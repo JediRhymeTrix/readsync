@@ -139,9 +139,9 @@ func TestScore(t *testing.T) {
 			wantReason: "file_hash",
 		},
 		{
-			name: "case-insensitive match on isbn",
-			ev:   Evidence{ISBN13: "9780735224292"},
-			stored: Evidence{ISBN13: "9780735224292"},
+			name:       "case-insensitive match on isbn",
+			ev:         Evidence{ISBN13: "9780735224292"},
+			stored:     Evidence{ISBN13: "9780735224292"},
 			wantMin:    85,
 			wantMax:    85,
 			wantReason: "isbn13",

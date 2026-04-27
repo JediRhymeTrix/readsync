@@ -1,7 +1,7 @@
 //go:build ignore
 // +build ignore
-// Original Phase 1 entry point — superseded by main_service.go in Phase 3.
 
+// Original Phase 1 entry point — superseded by main_service.go in Phase 3.
 
 // cmd/readsync-service/main.go
 //
@@ -21,15 +21,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 	"github.com/kardianos/service"
 	"github.com/readsync/readsync/internal/adapters/koreader"
 	"github.com/readsync/readsync/internal/api"
 	"github.com/readsync/readsync/internal/core"
 	"github.com/readsync/readsync/internal/db"
 	"github.com/readsync/readsync/internal/logging"
+	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/kardianos/service"
 	"github.com/readsync/readsync/internal/api"
@@ -96,7 +96,6 @@ func (p *program) runService(ctx context.Context) {
 		return
 	}
 
-
 	// Start KOReader KOSync adapter.
 	koreaderAdapter := koreader.New(koreader.DefaultConfig(), database.SQL(), logger)
 	koreaderAdapter.SetPipeline(pipeline)
@@ -104,7 +103,6 @@ func (p *program) runService(ctx context.Context) {
 		logger.Error("koreader adapter start failed", logging.F("error", err))
 		// Non-fatal: service continues without KOReader sync.
 	}
-
 
 	logger.Info("ReadSync service ready")
 

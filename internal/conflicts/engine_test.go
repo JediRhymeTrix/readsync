@@ -9,8 +9,8 @@ import (
 	"github.com/readsync/readsync/internal/model"
 )
 
-func pf64(f float64) *float64 { return &f }
-func pi32(i int32) *int32     { return &i }
+func pf64(f float64) *float64      { return &f }
+func pi32(i int32) *int32          { return &i }
 func ptime(t time.Time) *time.Time { return &t }
 
 func TestPrecedence(t *testing.T) {
