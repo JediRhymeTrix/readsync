@@ -39,17 +39,21 @@ func WriteMissingIDReport(report any, dir string) ActionResult {
 
 // EnableKOReaderEndpoint flips the local config flag the service watches.
 func EnableKOReaderEndpoint(configFile string) ActionResult {
+	absConfig, err := cleanAbsPath(configFile)
+	if err != nil {
+		return failD("enable_koreader_endpoint", "invalid config path", err.Error())
+	}
 	cfg := map[string]any{}
-	if data, err := os.ReadFile(configFile); err == nil {
+	if data, err := os.ReadFile(absConfig); err == nil {
 		_ = json.Unmarshal(data, &cfg)
 	}
 	cfg["koreader_enabled"] = true
 	cfg["koreader_lan_only"] = true
 	data, _ := json.MarshalIndent(cfg, "", "  ")
-	if err := os.MkdirAll(filepath.Dir(configFile), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(absConfig), 0o755); err != nil {
 		return failD("enable_koreader_endpoint", "mkdir failed", err.Error())
 	}
-	if err := os.WriteFile(configFile, data, 0o644); err != nil {
+	if err := os.WriteFile(absConfig, data, 0o644); err != nil {
 		return failD("enable_koreader_endpoint", "write failed", err.Error())
 	}
 	return okR("enable_koreader_endpoint", "KOReader endpoint enabled (LAN-only)")
@@ -78,15 +82,16 @@ func OpenFirewallRule(name string, port int) ActionResult {
 	if runtime.GOOS != "windows" {
 		return failD("open_firewall_rule", "not supported on this OS", runtime.GOOS)
 	}
-	if name == "" {
-		name = "ReadSync"
+	safeName, err := validateFirewallName(name)
+	if err != nil {
+		return failD("open_firewall_rule", "invalid rule name", err.Error())
 	}
 	if port <= 0 {
 		return failR("open_firewall_rule", "port must be > 0")
 	}
 	args := []string{
 		"advfirewall", "firewall", "add", "rule",
-		"name=" + name, "dir=in", "action=allow",
+		"name=" + safeName, "dir=in", "action=allow",
 		"protocol=TCP",
 		"localport=" + fmt.Sprintf("%d", port),
 		"profile=private", "remoteip=LocalSubnet",
@@ -97,7 +102,7 @@ func OpenFirewallRule(name string, port int) ActionResult {
 			"netsh failed (admin required?)", string(out))
 	}
 	return okR("open_firewall_rule",
-		fmt.Sprintf("firewall rule %q added for TCP/%d (LAN-only)", name, port))
+		fmt.Sprintf("firewall rule %q added for TCP/%d (LAN-only)", safeName, port))
 }
 
 // RestartService asks the SCM to restart ReadSync.

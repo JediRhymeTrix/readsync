@@ -5,11 +5,13 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"strings"
 	"testing"
 
+	"github.com/readsync/readsync/internal/repair"
 	"github.com/readsync/readsync/internal/setup"
 )
 
@@ -203,5 +205,59 @@ func TestRepair_UnknownSlug(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 	if !strings.Contains(string(body), "unknown repair action") {
 		t.Errorf("expected unknown-action error: %s", body)
+	}
+}
+
+func TestRepair_BackupLibrary_TraversalRejected(t *testing.T) {
+	s := newTestServer(t)
+	tok := s.CSRFToken()
+	resp := do(t, s, "POST", "/api/repair/backup_library?library=../../etc", nil,
+		map[string]string{CSRFHeader: tok})
+	if resp.StatusCode != 200 {
+		t.Errorf("status=%d", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var res repair.ActionResult
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&res); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if res.OK {
+		t.Error("backup_library with traversal path should not succeed")
+	}
+}
+
+func TestRepair_CreateColumns_InvalidCalibredb(t *testing.T) {
+	s := newTestServer(t)
+	tok := s.CSRFToken()
+	resp := do(t, s, "POST", "/api/repair/create_columns?calibredb=/usr/bin/sh&library=/tmp", nil,
+		map[string]string{CSRFHeader: tok})
+	if resp.StatusCode != 200 {
+		t.Errorf("status=%d", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var res repair.ActionResult
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&res); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if res.OK {
+		t.Error("create_columns with /usr/bin/sh calibredb should not succeed")
+	}
+}
+
+func TestRepair_EnableKOReader_TraversalRejected(t *testing.T) {
+	s := newTestServer(t)
+	tok := s.CSRFToken()
+	resp := do(t, s, "POST", "/api/repair/enable_koreader?config=../../etc/config.json", nil,
+		map[string]string{CSRFHeader: tok})
+	if resp.StatusCode != 200 {
+		t.Errorf("status=%d", resp.StatusCode)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var res repair.ActionResult
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&res); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if res.OK {
+		t.Error("enable_koreader with traversal config path should not succeed")
 	}
 }

@@ -72,9 +72,15 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
-	_, err = io.Copy(out, in)
-	return err
+	if _, err = io.Copy(out, in); err != nil {
+		_ = out.Close()
+		return err
+	}
+	if err = out.Sync(); err != nil {
+		_ = out.Close()
+		return err
+	}
+	return out.Close()
 }
 
 // BackupLibrary copies metadata.db to a timestamped .bak file.
@@ -82,7 +88,15 @@ func BackupLibrary(libraryPath string) ActionResult {
 	if libraryPath == "" {
 		return failR("backup_library", "library path is required")
 	}
-	src := filepath.Join(libraryPath, "metadata.db")
+	absLib, err := cleanAbsPath(libraryPath)
+	if err != nil {
+		return failD("backup_library", "invalid library path", err.Error())
+	}
+	src := filepath.Join(absLib, "metadata.db")
+	// Verify the resolved source file is inside the resolved library directory.
+	if !strings.HasPrefix(src, absLib+string(filepath.Separator)) {
+		return failR("backup_library", "invalid library path")
+	}
 	if _, err := os.Stat(src); err != nil {
 		return failD("backup_library", "metadata.db not found", err.Error())
 	}
@@ -129,6 +143,14 @@ func CreateCustomColumns(ctx context.Context, calibredbPath, libraryPath string)
 	if calibredbPath == "" || libraryPath == "" {
 		return failR("create_custom_columns", "calibredb path and library path are required")
 	}
+	safeCalib, err := validateCalibredbPath(calibredbPath)
+	if err != nil {
+		return failD("create_custom_columns", "invalid calibredb path", err.Error())
+	}
+	safeLib, err := cleanAbsPath(libraryPath)
+	if err != nil {
+		return failD("create_custom_columns", "invalid library path", err.Error())
+	}
 	type colDef struct{ Lookup, Label, DataType, Values string }
 	cols := []colDef{
 		{"readsync_progress", "ReadSync Progress", "int", ""},
@@ -142,7 +164,7 @@ func CreateCustomColumns(ctx context.Context, calibredbPath, libraryPath string)
 	}
 	created, skipped := 0, 0
 	for _, c := range cols {
-		args := []string{"add_custom_column", "--library-path", libraryPath,
+		args := []string{"add_custom_column", "--library-path", safeLib,
 			"--label", c.Lookup, "--name", c.Label, "--datatype", c.DataType}
 		if c.Values != "" {
 			vals := strings.Split(c.Values, ",")
@@ -153,7 +175,7 @@ func CreateCustomColumns(ctx context.Context, calibredbPath, libraryPath string)
 			args = append(args, "--display",
 				fmt.Sprintf(`{"enum_values":[%s]}`, strings.Join(quoted, ",")))
 		}
-		out, err := exec.CommandContext(ctx, calibredbPath, args...).CombinedOutput()
+		out, err := exec.CommandContext(ctx, safeCalib, args...).CombinedOutput()
 		if err != nil {
 			lower := strings.ToLower(string(out))
 			if strings.Contains(lower, "already exists") || strings.Contains(lower, "duplicate") {

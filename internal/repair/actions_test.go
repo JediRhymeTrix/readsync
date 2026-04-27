@@ -3,6 +3,7 @@
 package repair
 
 import (
+	"context"
 	"net"
 	"os"
 	"path/filepath"
@@ -178,5 +179,172 @@ func TestGenerateSecret_Length(t *testing.T) {
 	}
 	if len(s) < 30 {
 		t.Errorf("generateSecret too short: %d", len(s))
+	}
+}
+
+// ── Validation helpers ──────────────────────────────────────────────────────
+
+func TestCleanAbsPath_Empty(t *testing.T) {
+	if _, err := cleanAbsPath(""); err == nil {
+		t.Error("cleanAbsPath('') should return error")
+	}
+}
+
+func TestCleanAbsPath_Traversal(t *testing.T) {
+	for _, p := range []string{"../../etc/passwd", "/tmp/../etc/shadow", "foo/../../bar"} {
+		if _, err := cleanAbsPath(p); err == nil {
+			t.Errorf("cleanAbsPath(%q) should reject traversal", p)
+		}
+	}
+}
+
+func TestCleanAbsPath_Valid(t *testing.T) {
+	dir := t.TempDir()
+	got, err := cleanAbsPath(dir)
+	if err != nil {
+		t.Fatalf("cleanAbsPath(%q) unexpected error: %v", dir, err)
+	}
+	if got != dir {
+		t.Errorf("cleanAbsPath(%q) = %q; want %q", dir, got, dir)
+	}
+}
+
+func TestValidateCalibredbPath_Empty(t *testing.T) {
+	if _, err := validateCalibredbPath(""); err == nil {
+		t.Error("validateCalibredbPath('') should return error")
+	}
+}
+
+func TestValidateCalibredbPath_NotAbsolute(t *testing.T) {
+	if _, err := validateCalibredbPath("calibredb"); err == nil {
+		t.Error("validateCalibredbPath('calibredb') (relative) should return error")
+	}
+}
+
+func TestValidateCalibredbPath_WrongBasename(t *testing.T) {
+	for _, p := range []string{"/usr/bin/sh", "/bin/bash", "/tmp/evil.exe"} {
+		if _, err := validateCalibredbPath(p); err == nil {
+			t.Errorf("validateCalibredbPath(%q) should reject wrong basename", p)
+		}
+	}
+}
+
+func TestValidateCalibredbPath_Valid(t *testing.T) {
+	for _, p := range []string{"/usr/bin/calibredb", "/opt/calibre/calibredb.exe"} {
+		got, err := validateCalibredbPath(p)
+		if err != nil {
+			t.Errorf("validateCalibredbPath(%q) unexpected error: %v", p, err)
+		}
+		if got == "" {
+			t.Errorf("validateCalibredbPath(%q) returned empty string", p)
+		}
+	}
+}
+
+func TestValidateFirewallName_Empty(t *testing.T) {
+	got, err := validateFirewallName("")
+	if err != nil {
+		t.Fatalf("validateFirewallName('') unexpected error: %v", err)
+	}
+	if got != "ReadSync" {
+		t.Errorf("empty name should default to ReadSync, got %q", got)
+	}
+}
+
+func TestValidateFirewallName_Invalid(t *testing.T) {
+	for _, n := range []string{"foo;bar", "name=evil", "rule\x00null", "foo&bar", "foo|bar"} {
+		if _, err := validateFirewallName(n); err == nil {
+			t.Errorf("validateFirewallName(%q) should reject invalid name", n)
+		}
+	}
+}
+
+func TestValidateFirewallName_Valid(t *testing.T) {
+	for _, n := range []string{"ReadSync", "ReadSync-7200", "My Service 1"} {
+		got, err := validateFirewallName(n)
+		if err != nil {
+			t.Errorf("validateFirewallName(%q) unexpected error: %v", n, err)
+		}
+		if got != n {
+			t.Errorf("validateFirewallName(%q) = %q; want %q", n, got, n)
+		}
+	}
+}
+
+// ── BackupLibrary ───────────────────────────────────────────────────────────
+
+func TestBackupLibrary_TraversalRejected(t *testing.T) {
+	for _, p := range []string{"../../tmp", "/a/../b/c"} {
+		r := BackupLibrary(p)
+		if r.OK {
+			t.Errorf("BackupLibrary(%q) should fail with traversal path", p)
+		}
+	}
+}
+
+// ── CreateCustomColumns ─────────────────────────────────────────────────────
+
+func TestCreateCustomColumns_EmptyArgs(t *testing.T) {
+	r := CreateCustomColumns(context.Background(), "", "")
+	if r.OK {
+		t.Error("CreateCustomColumns with empty args should fail")
+	}
+}
+
+func TestCreateCustomColumns_InvalidCalibredbPath(t *testing.T) {
+	dir := t.TempDir()
+	// Wrong executable name (not calibredb/calibredb.exe).
+	r := CreateCustomColumns(context.Background(), "/usr/bin/sh", dir)
+	if r.OK {
+		t.Error("CreateCustomColumns with /usr/bin/sh should fail validation")
+	}
+	if !strings.Contains(strings.ToLower(r.Message+r.Detail), "calibredb") {
+		t.Errorf("error should mention calibredb, got: %s %s", r.Message, r.Detail)
+	}
+}
+
+func TestCreateCustomColumns_RelativeCalibredbPath(t *testing.T) {
+	dir := t.TempDir()
+	r := CreateCustomColumns(context.Background(), "calibredb", dir)
+	if r.OK {
+		t.Error("CreateCustomColumns with relative calibredb path should fail")
+	}
+}
+
+func TestCreateCustomColumns_TraversalInLibraryPath(t *testing.T) {
+	// Valid calibredb path but traversal in library path.
+	r := CreateCustomColumns(context.Background(), "/usr/bin/calibredb", "../../etc")
+	if r.OK {
+		t.Error("CreateCustomColumns with traversal library path should fail")
+	}
+}
+
+// ── EnableKOReaderEndpoint ──────────────────────────────────────────────────
+
+func TestEnableKOReaderEndpoint_EmptyPath(t *testing.T) {
+	r := EnableKOReaderEndpoint("")
+	if r.OK {
+		t.Error("EnableKOReaderEndpoint('') should fail")
+	}
+}
+
+func TestEnableKOReaderEndpoint_TraversalRejected(t *testing.T) {
+	for _, p := range []string{"../../etc/readsync.json", "/tmp/../etc/config.json"} {
+		r := EnableKOReaderEndpoint(p)
+		if r.OK {
+			t.Errorf("EnableKOReaderEndpoint(%q) should fail with traversal path", p)
+		}
+	}
+}
+
+// ── OpenFirewallRule ────────────────────────────────────────────────────────
+
+func TestOpenFirewallRule_InvalidName(t *testing.T) {
+	// On non-Windows the "not supported" error fires before name validation,
+	// so we test the validator directly.
+	for _, n := range []string{"foo;drop all", "evil|cmd", "name=bad"} {
+		if _, err := validateFirewallName(n); err == nil {
+			t.Errorf("validateFirewallName(%q) should reject unsafe name", n)
+		}
 	}
 }
