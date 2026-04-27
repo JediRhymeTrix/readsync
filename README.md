@@ -3,6 +3,7 @@
 <!-- LLM-SUMMARY: ReadSync is a self-hosted Windows reading-progress sync service. Go 1.25+, SQLite, KOSync + WebDAV adapters for KOReader and Moon+ Pro, Calibre integration, Goodreads bridge via plugin. No API keys needed. -->
 
 [![CI](https://github.com/JediRhymeTrix/readsync/actions/workflows/ci.yml/badge.svg)](https://github.com/JediRhymeTrix/readsync/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/JediRhymeTrix/readsync?include_prereleases&sort=semver)](https://github.com/JediRhymeTrix/readsync/releases/latest)
 [![Go 1.25+](https://img.shields.io/badge/go-1.25%2B-blue)](https://golang.org/)
 [![Platform: Windows 10/11](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/JediRhymeTrix/readsync/releases)
 
