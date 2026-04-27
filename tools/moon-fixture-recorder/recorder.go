@@ -7,11 +7,13 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -36,7 +38,7 @@ func (rec *Recorder) Handler() http.Handler {
 
 func (rec *Recorder) serveWebDAV(w http.ResponseWriter, r *http.Request) {
 	if rec.verbose {
-		log.Printf("[moon] %-10s %s  Content-Length=%d", r.Method, r.URL.Path, r.ContentLength)
+		log.Printf("[moon] %-10s %s  Content-Length=%d", r.Method, sanitizeLog(r.URL.Path), r.ContentLength)
 	}
 	switch r.Method {
 	case "MKCOL":
@@ -58,21 +60,29 @@ func (rec *Recorder) serveWebDAV(w http.ResponseWriter, r *http.Request) {
 
 // MKCOL — create a collection (directory). Moon+ sends this for /dav/moonreader/.
 func (rec *Recorder) handleMKCOL(w http.ResponseWriter, r *http.Request) {
-	dir := rec.diskPath(r.URL.Path)
+	dir, err := rec.safeDiskPath(r.URL.Path)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		log.Printf("[webdav] MKCOL %s error: %v", r.URL.Path, err)
+		log.Printf("[webdav] MKCOL %s error: %v", sanitizeLog(r.URL.Path), err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	if rec.verbose {
-		log.Printf("[webdav] MKCOL %s → 201", r.URL.Path)
+		log.Printf("[webdav] MKCOL %s → 201", sanitizeLog(r.URL.Path))
 	}
 	w.WriteHeader(http.StatusCreated)
 }
 
 // PROPFIND — return minimal file properties. Moon+ uses Depth: 0.
 func (rec *Recorder) handlePROPFIND(w http.ResponseWriter, r *http.Request) {
-	diskPath := rec.diskPath(r.URL.Path)
+	diskPath, err := rec.safeDiskPath(r.URL.Path)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
 	info, err := os.Stat(diskPath)
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
@@ -115,13 +125,19 @@ func (rec *Recorder) handlePUT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate path before any file operations.
+	diskPath, err := rec.safeDiskPath(r.URL.Path)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
 	// Capture .po files with a timestamped filename.
 	if strings.HasSuffix(r.URL.Path, ".po") {
 		rec.saveCapturedPO(r.URL.Path, body)
 	}
 
 	// Write to the DAV root so GET can retrieve it.
-	diskPath := rec.diskPath(r.URL.Path)
 	if err := os.MkdirAll(filepath.Dir(diskPath), 0755); err == nil {
 		_ = os.WriteFile(diskPath, body, 0644)
 	}
@@ -131,7 +147,11 @@ func (rec *Recorder) handlePUT(w http.ResponseWriter, r *http.Request) {
 
 // GET — serve a file from davRoot.
 func (rec *Recorder) handleGET(w http.ResponseWriter, r *http.Request) {
-	diskPath := rec.diskPath(r.URL.Path)
+	diskPath, err := rec.safeDiskPath(r.URL.Path)
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
 	data, err := os.ReadFile(diskPath)
 	if err != nil {
 		http.NotFound(w, r)
@@ -144,26 +164,81 @@ func (rec *Recorder) handleGET(w http.ResponseWriter, r *http.Request) {
 
 // saveCapturedPO saves a .po body to captureDir with a timestamp suffix.
 func (rec *Recorder) saveCapturedPO(urlPath string, body []byte) {
-	base := filepath.Base(urlPath)
+	// Use URL-aware path.Base and sanitize to prevent path separator injection.
+	base := path.Base(urlPath)
+	base = sanitizeFilename(base)
+	if base == "" || !strings.HasSuffix(base, ".po") {
+		log.Printf("[recorder] skipping capture for unsafe path %q", sanitizeLog(urlPath))
+		return
+	}
 	ts := time.Now().UTC().Format("20060102T150405Z")
 	name := strings.TrimSuffix(base, ".po") + "_" + ts + ".po"
 	dst := filepath.Join(rec.captureDir, name)
 
 	if err := os.WriteFile(dst, body, 0644); err != nil {
-		log.Printf("[recorder] failed to save %q: %v", dst, err)
+		log.Printf("[recorder] failed to save %q: %v", sanitizeLog(dst), err)
 		return
 	}
-	log.Printf("[recorder] captured %-30s  %d bytes", name, len(body))
+	log.Printf("[recorder] captured %-30s  %d bytes", sanitizeLog(name), len(body))
 	if len(body) >= 4 {
-		log.Printf("[recorder] magic bytes: % x", body[:min4(len(body), 16)])
+		log.Printf("[recorder] magic bytes: %s", hex.EncodeToString(body[:min4(len(body), 16)]))
 	}
 }
 
-// diskPath maps a URL path under /dav/ to an absolute filesystem path.
-func (rec *Recorder) diskPath(urlPath string) string {
+// safeDiskPath maps a URL path to an absolute filesystem path under davRoot.
+// It rejects paths that contain ".." components or backslashes, and verifies
+// the resolved path stays within davRoot. Returns an error for invalid paths.
+func (rec *Recorder) safeDiskPath(urlPath string) (string, error) {
+	// Reject backslashes (Windows path separator injection via URL).
+	if strings.ContainsRune(urlPath, '\\') {
+		return "", fmt.Errorf("invalid path: backslash not allowed")
+	}
+	// Reject any ".." component to prevent directory traversal.
+	for _, part := range strings.Split(urlPath, "/") {
+		if part == ".." {
+			return "", fmt.Errorf("invalid path: parent traversal not allowed")
+		}
+	}
+
+	// Strip /dav prefix and convert URL slashes to OS path separators.
 	rel := strings.TrimPrefix(urlPath, "/dav")
-	rel = filepath.FromSlash(rel)
-	return filepath.Join(rec.davRoot, rel)
+	relOS := filepath.FromSlash(rel)
+
+	// Compute absolute path and verify it stays under davRoot.
+	absPath, err := filepath.Abs(filepath.Join(rec.davRoot, relOS))
+	if err != nil {
+		return "", fmt.Errorf("invalid path: %w", err)
+	}
+	absRoot, err := filepath.Abs(rec.davRoot)
+	if err != nil {
+		return "", fmt.Errorf("invalid root: %w", err)
+	}
+	if absPath != absRoot && !strings.HasPrefix(absPath, absRoot+string(filepath.Separator)) {
+		return "", fmt.Errorf("path escapes root")
+	}
+
+	return absPath, nil
+}
+
+// logSanitizer replaces newline and carriage-return characters with their
+// escape sequences so user-controlled strings cannot inject forged log lines.
+var logSanitizer = strings.NewReplacer("\n", `\n`, "\r", `\r`)
+
+// sanitizeLog applies logSanitizer to s.
+func sanitizeLog(s string) string {
+	return logSanitizer.Replace(s)
+}
+
+// sanitizeFilename replaces characters that are not alphanumeric, hyphen,
+// underscore, or dot with underscores to produce a safe capture filename.
+func sanitizeFilename(s string) string {
+	return strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
+			(r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+			return r
+		}
+		return '_'
+	}, s)
 }
 
 func min4(a, b int) int {
