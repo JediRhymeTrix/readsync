@@ -98,7 +98,7 @@ jobs:
           sha256sum *.zip *.exe > SHA256SUMS.txt
 
       - name: Create or update GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           # Keep release as draft so humans can review generated assets before publishing.
           draft: true
