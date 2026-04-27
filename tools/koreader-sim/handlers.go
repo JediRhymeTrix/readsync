@@ -162,18 +162,13 @@ func (s *Server) logf(format string, args ...interface{}) {
 	}
 }
 
-// sanitizeLog replaces newline and carriage-return characters with a space
-// so user-controlled strings cannot inject forged log lines.
+// logSanitizer replaces newline and carriage-return characters with their
+// escape sequences so user-controlled strings cannot inject forged log lines.
+var logSanitizer = strings.NewReplacer("\n", `\n`, "\r", `\r`)
+
+// sanitizeLog applies logSanitizer to s.
 func sanitizeLog(s string) string {
-	var b strings.Builder
-	for _, r := range s {
-		if r == '\n' || r == '\r' {
-			b.WriteRune(' ')
-		} else {
-			b.WriteRune(r)
-		}
-	}
-	return b.String()
+	return logSanitizer.Replace(s)
 }
 
 func writeJSON(w http.ResponseWriter, status int, body interface{}) {

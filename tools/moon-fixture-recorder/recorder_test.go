@@ -88,18 +88,18 @@ func TestSafeDiskPath_NoEscape(t *testing.T) {
 	}
 }
 
-// TestSanitizeLog checks that CR and LF are replaced with spaces.
+// TestSanitizeLog checks that CR and LF are replaced with escape sequences.
 func TestSanitizeLog(t *testing.T) {
 	tests := []struct {
 		input string
 		want  string
 	}{
 		{"normal", "normal"},
-		{"with\nnewline", "with newline"},
-		{"with\rreturn", "with return"},
-		{"multi\r\nline", "multi  line"},
+		{"with\nnewline", `with\nnewline`},
+		{"with\rreturn", `with\rreturn`},
+		{"multi\r\nline", `multi\r\nline`},
 		{"/dav/moonreader/book.po", "/dav/moonreader/book.po"},
-		{"user\ninjected\rlog", "user injected log"},
+		{"user\ninjected\rlog", `user\ninjected\rlog`},
 		{"", ""},
 	}
 	for _, tt := range tests {

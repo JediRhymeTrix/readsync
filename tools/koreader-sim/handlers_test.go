@@ -6,17 +6,17 @@ import (
 	"testing"
 )
 
-// TestSanitizeLog_KOSim checks that CR and LF are stripped from log strings.
+// TestSanitizeLog_KOSim checks that CR and LF are replaced with escape sequences.
 func TestSanitizeLog_KOSim(t *testing.T) {
 	tests := []struct {
 		input string
 		want  string
 	}{
 		{"alice", "alice"},
-		{"user\ninjected", "user injected"},
-		{"user\rinjected", "user injected"},
-		{"multi\r\nline", "multi  line"},
-		{"device\nname\rvalue", "device name value"},
+		{"user\ninjected", `user\ninjected`},
+		{"user\rinjected", `user\rinjected`},
+		{"multi\r\nline", `multi\r\nline`},
+		{"device\nname\rvalue", `device\nname\rvalue`},
 		{"", ""},
 	}
 	for _, tt := range tests {

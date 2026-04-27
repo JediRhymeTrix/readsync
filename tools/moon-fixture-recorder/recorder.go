@@ -7,6 +7,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -180,7 +181,7 @@ func (rec *Recorder) saveCapturedPO(urlPath string, body []byte) {
 	}
 	log.Printf("[recorder] captured %-30s  %d bytes", sanitizeLog(name), len(body))
 	if len(body) >= 4 {
-		log.Printf("[recorder] magic bytes: %s", sanitizeLog(fmt.Sprintf("% x", body[:min4(len(body), 16)])))
+		log.Printf("[recorder] magic bytes: %s", hex.EncodeToString(body[:min4(len(body), 16)]))
 	}
 }
 
@@ -219,15 +220,13 @@ func (rec *Recorder) safeDiskPath(urlPath string) (string, error) {
 	return absPath, nil
 }
 
-// sanitizeLog replaces newline and carriage-return characters with a space
-// so user-controlled strings cannot inject forged log lines.
+// logSanitizer replaces newline and carriage-return characters with their
+// escape sequences so user-controlled strings cannot inject forged log lines.
+var logSanitizer = strings.NewReplacer("\n", `\n`, "\r", `\r`)
+
+// sanitizeLog applies logSanitizer to s.
 func sanitizeLog(s string) string {
-	return strings.Map(func(r rune) rune {
-		if r == '\n' || r == '\r' {
-			return ' '
-		}
-		return r
-	}, s)
+	return logSanitizer.Replace(s)
 }
 
 // sanitizeFilename replaces characters that are not alphanumeric, hyphen,
