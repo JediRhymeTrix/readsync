@@ -39,6 +39,8 @@ Go 1.25+, SQLite WAL (CGO), KOSync + WebDAV adapters.
 
 ```powershell
 go mod tidy && go mod download   # first-time setup
+pre-commit install               # install local commit hooks
+pre-commit run --all-files       # run formatting/config/unit-test hooks
 make build                       # all binaries → bin/
 make test-unit                   # fast, no CGO
 make test-phase7-unit            # all no-CGO packages
@@ -73,6 +75,8 @@ make test                        # everything
 | Migrations | `internal/db/migrations.go` |
 | Wizard state machine | `internal/setup/wizard.go` |
 | Secrets store | `internal/secrets/secrets.go` |
+| Pre-commit hooks | `.pre-commit-config.yaml` |
+| v0.1.0 release notes backup | `docs/release-notes-v0.1.0.md` |
 
 ---
 

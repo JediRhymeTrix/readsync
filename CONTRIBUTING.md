@@ -42,11 +42,14 @@ All contributors must follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Development Setup
 
-**Prerequisites:** Go 1.25+, GCC (Windows: [TDM-GCC](https://jmeubank.github.io/tdm-gcc/)), Node.js 18+ (E2E only).
+**Prerequisites:** Go 1.25+, GCC (Windows: [TDM-GCC](https://jmeubank.github.io/tdm-gcc/)), Python 3.10+ with `pre-commit`, Node.js 18+ (E2E only).
 
 ```bash
 git clone https://github.com/<your-fork>/readsync.git && cd readsync
 go mod tidy && go mod download
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
 
 # Pure unit tests (no CGO)
 go test -v ./internal/resolver/... ./internal/conflicts/... ./internal/logging/...
@@ -56,6 +59,8 @@ CGO_ENABLED=1 go test -v ./...
 ```
 
 See `make help` for all available targets.
+
+Pre-commit runs whitespace/config checks, `gofmt`, `go mod tidy`, and the fast no-CGO unit test set. Run `pre-commit run --all-files` before opening a PR if hooks were not installed locally.
 
 ---
 
@@ -125,13 +130,21 @@ ReadSync follows [Semantic Versioning 2.0.0](https://semver.org/): `MAJOR.MINOR.
 ### How a release is cut
 
 1. Every PR merged to `main` auto-updates a **draft release** via
-   [Release Drafter](.github/release-drafter.yml) — no manual changelog editing.
-2. A maintainer reviews the draft, edits if needed, then clicks **Publish**.
+   [Release Drafter](.github/release-drafter.yml). Release Drafter can rewrite
+   draft content, so maintainers keep canonical notes backed up in `docs/`.
+2. A maintainer reviews the draft, restores canonical notes if needed, verifies
+   assets, then clicks **Publish**.
 3. Publishing a reviewed draft release creates or uses a `vX.Y.Z` tag → triggers
    [`.github/workflows/release.yml`](.github/workflows/release.yml).
 4. The release workflow cross-compiles Windows binaries and attaches
    `ReadSync-vX.Y.Z-windows-amd64.zip` + `SHA256SUMS.txt` to the release.
 5. Tags containing `-` (e.g. `v1.0.0-rc.1`) are marked pre-release automatically.
+
+For the first public release, the canonical notes are backed up in
+[`docs/release-notes-v0.1.0.md`](docs/release-notes-v0.1.0.md). If Release
+Drafter rewrites the draft after maintenance commits, restore title `v0.1.0`,
+tag `v0.1.0`, target `main`, those notes, and the `ReadSync-v0.1.0-windows-amd64.zip`
+plus `SHA256SUMS.txt` assets before publishing.
 
 ---
 

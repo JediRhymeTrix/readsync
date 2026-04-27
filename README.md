@@ -56,6 +56,9 @@ git clone https://github.com/JediRhymeTrix/readsync.git
 cd readsync
 go mod tidy
 go mod download
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
 make test-unit
 make build
 ```
@@ -67,6 +70,8 @@ make test
 ```
 
 Windows CGO needs TDM-GCC or equivalent in PATH. Linux CI installs `gcc`.
+
+Pre-commit runs whitespace/config checks, `gofmt`, `go mod tidy`, and fast no-CGO unit tests before commits. Install it once per clone with `pre-commit install`.
 
 ## Device setup
 
@@ -130,6 +135,7 @@ tests/security/         CSRF and redaction tests
 | `docs/research/` | Protocol and platform research |
 | `docs/qa/` | Acceptance matrix, checklist, fixture plan |
 | `docs/github-push-prompt.md` | GitHub publishing procedure |
+| `docs/release-notes-v0.1.0.md` | Backed-up canonical v0.1.0 draft release notes |
 
 ## Security defaults
 

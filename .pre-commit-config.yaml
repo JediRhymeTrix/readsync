@@ -1,0 +1,35 @@
+# See https://pre-commit.com for installation and usage.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^(README\.md|CONTRIBUTING\.md|AGENTS\.md|CLAUDE\.md|llms\.txt|docs/release-notes-v0\.1\.0\.md|\.pre-commit-config\.yaml)$
+      - id: end-of-file-fixer
+        files: ^(README\.md|CONTRIBUTING\.md|AGENTS\.md|CLAUDE\.md|llms\.txt|docs/release-notes-v0\.1\.0\.md|\.pre-commit-config\.yaml)$
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        files: ^(README\.md|CONTRIBUTING\.md|AGENTS\.md|CLAUDE\.md|llms\.txt|docs/release-notes-v0\.1\.0\.md|\.pre-commit-config\.yaml)$
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: gofmt -w
+        language: system
+        files: ^(cmd/readsync-service/|cmd/readsyncctl/|cmd/readsync-tray/|internal/(resolver|conflicts|logging)/).*\.go$
+      - id: go-mod-tidy
+        name: go mod tidy
+        entry: go mod tidy
+        language: system
+        pass_filenames: false
+        files: ^(go\.mod|go\.sum|.*\.go)$
+      - id: go-test-unit
+        name: go test unit packages
+        entry: go test -count=1 -timeout 30s ./internal/resolver/... ./internal/conflicts/... ./internal/logging/...
+        language: system
+        pass_filenames: false
+        files: ^(cmd|internal|tests|go\.mod|go\.sum)/?

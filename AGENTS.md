@@ -67,6 +67,7 @@ ReadSync/
 ├── examples/                 Runnable usage examples
 ├── installer/                Inno Setup + smoke.ps1
 ├── scripts/bootstrap.sh
+├── .pre-commit-config.yaml
 ├── Makefile / go.mod / go.sum
 ├── AGENTS.md  ← you are here
 ├── CLAUDE.md / llms.txt
@@ -112,6 +113,9 @@ ReadSync/
 ```powershell
 # Setup (one time)
 go mod tidy && go mod download
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
 
 # Build all binaries → bin/
 make build
@@ -251,6 +255,7 @@ PRAGMA: `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout=5000`, `foreign_
 
 | Need | File |
 |------|------|
+| Pre-commit hooks | `.pre-commit-config.yaml` |
 | KOReader protocol | `docs/research/koreader.md` |
 | Moon+ protocol | `docs/research/moonplus.md` |
 | Calibre CLI | `docs/research/calibre.md` |
@@ -261,6 +266,7 @@ PRAGMA: `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout=5000`, `foreign_
 | Diagnostic bundle | `docs/diagnostic-bundle.md` |
 | CI/CD | `.github/workflows/ci.yml` |
 | Release process | `CONTRIBUTING.md#release-process--semver` |
+| v0.1.0 release notes backup | `docs/release-notes-v0.1.0.md` |
 | Security policy | `SECURITY.md` |
 | Support | `SUPPORT.md` |
 | Examples | `examples/` |

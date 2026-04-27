@@ -6,7 +6,7 @@
 
 ## Summary
 
-ReadSync (`github.com/readsync/readsync`) is a Go 1.22+ Windows Service that:
+ReadSync (`github.com/readsync/readsync`) is a Go 1.25+ Windows Service that:
 
 - Implements a KOSync-compatible HTTP server (port 7200) for KOReader sync.
 - Implements a WebDAV server (port 8765) for Moon+ Reader Pro `.po` file sync.
@@ -37,12 +37,13 @@ outbox worker, CSRF-protected admin API, Windows DPAPI secrets storage, secret-r
 - [docs/qa/acceptance-checklist.md](docs/qa/acceptance-checklist.md): 14 acceptance criteria with test mapping
 - [docs/phases/README.md](docs/phases/README.md): Phase delivery manifests index (P0–P10)
 - [docs/github-push-prompt.md](docs/github-push-prompt.md): Self-contained GitHub publishing prompt (gh CLI + API commands)
+- [docs/release-notes-v0.1.0.md](docs/release-notes-v0.1.0.md): Canonical backed-up release notes for the first public release draft
 - [examples/README.md](examples/README.md): Runnable usage examples
 - [tests/README.md](tests/README.md): E2E and Playwright test instructions
 
 ## Source
 
-- [go.mod](go.mod): Module `github.com/readsync/readsync`, Go 1.22+
+- [go.mod](go.mod): Module `github.com/readsync/readsync`, Go 1.25+
 - [internal/model/model.go](internal/model/model.go): All domain types (Source, ReadStatus, OutboxStatus, etc.)
 - [internal/adapters/adapter.go](internal/adapters/adapter.go): Adapter / EventEmitter / WriteTarget interfaces
 - [internal/resolver/resolver.go](internal/resolver/resolver.go): 10-signal identity resolver + confidence bands
@@ -56,5 +57,6 @@ outbox worker, CSRF-protected admin API, Windows DPAPI secrets storage, secret-r
 - [internal/setup/wizard.go](internal/setup/wizard.go): 10-step setup wizard state machine
 - [internal/repair/repair.go](internal/repair/repair.go): 12 self-repair actions
 - [Makefile](Makefile): All build and test targets
+- [.pre-commit-config.yaml](.pre-commit-config.yaml): Pre-commit hooks for whitespace/config validation, gofmt, go mod tidy, and fast unit tests
 - [.github/workflows/ci.yml](.github/workflows/ci.yml): CI pipeline (unit, integration, cross-compile)
 - [.github/workflows/release.yml](.github/workflows/release.yml): Release automation
