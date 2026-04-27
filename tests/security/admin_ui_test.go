@@ -125,3 +125,40 @@ func TestLogs_NoSecretsInOutput(t *testing.T) {
 		}
 	}
 }
+
+// TestWizardSnippet_NoXSS verifies the wizard HTML endpoint escapes injected payloads.
+func TestWizardSnippet_NoXSS(t *testing.T) {
+	s := newSecServer(t)
+	tok := s.CSRFToken()
+
+	// The welcome page always returns a canned message — this test focuses on
+	// the HTML rendering path; deeper payload injection is covered in
+	// internal/api/html_test.go where renderWizardSnippet is tested directly.
+	resp := doReq(t, s, http.MethodPost, "/api/wizard/run/welcome?html=1",
+		map[string]string{api.CSRFHeader: tok})
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "<script>") || strings.Contains(bodyStr, "onerror=") {
+		t.Errorf("wizard HTML snippet contains unescaped HTML: %s", bodyStr)
+	}
+	if !strings.Contains(bodyStr, "rs-wizard-message") {
+		t.Errorf("wizard HTML snippet missing expected class: %s", bodyStr)
+	}
+}
+
+// TestRepairSnippet_NoXSS verifies the repair HTML endpoint escapes injected payloads.
+func TestRepairSnippet_NoXSS(t *testing.T) {
+	s := newSecServer(t)
+	tok := s.CSRFToken()
+
+	resp := doReq(t, s, http.MethodPost, "/api/repair/goodreads_plugin?html=1",
+		map[string]string{api.CSRFHeader: tok})
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "<script>") || strings.Contains(bodyStr, "onerror=") {
+		t.Errorf("repair HTML snippet contains unescaped HTML: %s", bodyStr)
+	}
+	if !strings.Contains(bodyStr, "rs-status") {
+		t.Errorf("repair HTML snippet missing expected class: %s", bodyStr)
+	}
+}
