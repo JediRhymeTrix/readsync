@@ -100,8 +100,8 @@ jobs:
       - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # Release Drafter will have pre-created a draft; this finalises it.
-          draft: false
+          # Keep release as draft so humans can review generated assets before publishing.
+          draft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
           generate_release_notes: false
           fail_on_unmatched_files: true

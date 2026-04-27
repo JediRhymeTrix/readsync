@@ -72,6 +72,9 @@ Simulator uses only Go stdlib (no external deps).
 format documented, step-by-step 5-session capture script, diff analysis method,
 known quirks (spaces in filenames, PROPFIND depth, ETag).
 
+**User action required:** `fixtures/moonplus/captures/*.po` must be populated
+by running the recorder with a real Moon+ Pro device (see moonplus.md §5).
+
 ---
 
 ## Deliverable 4: Windows Service Spike + ADR
@@ -112,3 +115,22 @@ AC-08), phase coverage matrix (P0 covers 20 tests, P2 covers 22 more).
       (`bash fixtures/koreader/curl-replay.sh http://localhost:7200`)
 - [x] Moon+ fixture recorder produced 4 real captures from Moon+ Pro v9 (0%, 25.8%, 73.2%, 100%)
       *(user action required — see docs/research/moonplus.md §5)*
+
+---
+
+## Build Verification
+
+```bash
+# Vet all Go code
+go vet ./tools/koreader-sim/...
+go vet ./tools/moon-fixture-recorder/...
+go vet ./tools/winsvc-spike/...
+go vet ./tools/generate-fixtures/...
+
+# Generate synthetic fixtures
+cd tools/generate-fixtures && go run . --root ../..
+
+# Run KOReader simulator + replay
+cd tools/koreader-sim && go run . --port 7200 &
+bash fixtures/koreader/curl-replay.sh
+```
