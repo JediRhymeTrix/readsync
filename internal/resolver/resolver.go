@@ -33,17 +33,17 @@ import (
 // Evidence is the set of identifiers supplied by an adapter for a book.
 // All fields are optional; empty string means "not provided".
 type Evidence struct {
-	FileHash       string
-	EpubID         string
-	CalibreID      string
-	GoodreadsID    string
-	ISBN13         string
-	ISBN10         string
-	ASIN           string
+	FileHash        string
+	EpubID          string
+	CalibreID       string
+	GoodreadsID     string
+	ISBN13          string
+	ISBN10          string
+	ASIN            string
 	KOReaderDocHash string
-	MoonKey        string
-	Title          string
-	AuthorSort     string
+	MoonKey         string
+	Title           string
+	AuthorSort      string
 }
 
 // Match is the result of identity resolution.
@@ -58,11 +58,11 @@ type Match struct {
 type ConfidenceBand int
 
 const (
-	BandQuarantine       ConfidenceBand = iota // 0-39
-	BandUserReview                              // 40-59
-	BandWritebackWary                           // 60-79
-	BandWritebackSafe                           // 80-94
-	BandAutoResolve                             // 95-100
+	BandQuarantine    ConfidenceBand = iota // 0-39
+	BandUserReview                          // 40-59
+	BandWritebackWary                       // 60-79
+	BandWritebackSafe                       // 80-94
+	BandAutoResolve                         // 95-100
 )
 
 // Band returns the ConfidenceBand for a score.

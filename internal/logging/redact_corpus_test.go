@@ -18,8 +18,8 @@ import (
 var secretValues = []string{
 	"hunter2",                         // password
 	"supersecret-moon-1234",           // moon+ credential
-	"eyJhbGciOiJSUzI1NiJ9.payload",   // JWT fragment
-	"sk_live_abcdef1234567890abcdef",   // stripe-style API key
+	"eyJhbGciOiJSUzI1NiJ9.payload",    // JWT fragment
+	"sk_live_abcdef1234567890abcdef",  // stripe-style API key
 	"ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0", // GitHub PAT
 	"DPAPI-raw-secret-bytes",          // DPAPI value
 }
@@ -37,8 +37,8 @@ func TestLogCorpus_NoSecretsInOutput(t *testing.T) {
 	log.Info("moon+ upload complete",
 		F("file", "MyBook.epub.po"),
 		F("size_bytes", 42),
-		F("password", "hunter2"),                      // must be redacted
-		F("token", "eyJhbGciOiJSUzI1NiJ9.payload"),   // must be redacted
+		F("password", "hunter2"),                   // must be redacted
+		F("token", "eyJhbGciOiJSUzI1NiJ9.payload"), // must be redacted
 	)
 	log.Info("adapter credentials rotated",
 		F("api_key", "sk_live_abcdef1234567890abcdef"), // must be redacted
@@ -96,7 +96,7 @@ func TestIsSecretKey_BoundaryWords(t *testing.T) {
 
 	// These must NOT be treated as secrets (no word-boundary match):
 	mustNotBeSecret := []string{
-		"author",         // contains "auth" but is not a secret key
+		"author", // contains "auth" but is not a secret key
 		"title",
 		"book_id",
 		"percent",
@@ -105,8 +105,8 @@ func TestIsSecretKey_BoundaryWords(t *testing.T) {
 		"notes",
 		"updated_at",
 		"user_id",
-		"authenticated",  // starts with "auth" but has suffix
-		"authenticate",   // auth + icate
+		"authenticated", // starts with "auth" but has suffix
+		"authenticate",  // auth + icate
 	}
 	for _, k := range mustNotBeSecret {
 		if IsSecretKey(k) {
