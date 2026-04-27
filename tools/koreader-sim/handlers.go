@@ -92,7 +92,7 @@ func (s *Server) handleSyncsPush(w http.ResponseWriter, r *http.Request) {
 	defer s.state.mu.Unlock()
 
 	if existing, exists := s.state.Progress[stateKey]; exists && existing.Timestamp >= now {
-		s.logf("push: stale %s/%s (ts=%d)", u, req.Document[:8], existing.Timestamp)
+		s.logf("push: stale %s/%s (ts=%d)", sanitizeLog(u), req.Document[:8], existing.Timestamp)
 		writeJSON(w, http.StatusPreconditionFailed, map[string]interface{}{
 			"message":   "Document update is not newer.",
 			"document":  req.Document,
@@ -104,7 +104,7 @@ func (s *Server) handleSyncsPush(w http.ResponseWriter, r *http.Request) {
 	req.Timestamp = now
 	s.state.Progress[stateKey] = req
 	s.saveStateUnlocked()
-	s.logf("push: %s/%s pct=%.2f device=%s", u, req.Document[:8], req.Percentage, req.Device)
+	s.logf("push: %s/%s pct=%.2f device=%s", sanitizeLog(u), req.Document[:8], req.Percentage, sanitizeLog(req.Device))
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"document":  req.Document,
 		"timestamp": now,
@@ -136,11 +136,11 @@ func (s *Server) handleSyncsPull(w http.ResponseWriter, r *http.Request) {
 	s.state.mu.RUnlock()
 
 	if !exists {
-		s.logf("pull: %s/%s not found", u, first8(docHash))
+		s.logf("pull: %s/%s not found", sanitizeLog(u), first8(docHash))
 		writeJSON(w, http.StatusOK, map[string]interface{}{})
 		return
 	}
-	s.logf("pull: %s/%s pct=%.2f", u, first8(docHash), entry.Percentage)
+	s.logf("pull: %s/%s pct=%.2f", sanitizeLog(u), first8(docHash), entry.Percentage)
 	writeJSON(w, http.StatusOK, entry)
 }
 
@@ -160,6 +160,20 @@ func (s *Server) logf(format string, args ...interface{}) {
 	if s.verbose {
 		log.Printf("[kosync] "+format, args...)
 	}
+}
+
+// sanitizeLog replaces newline and carriage-return characters with a space
+// so user-controlled strings cannot inject forged log lines.
+func sanitizeLog(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if r == '\n' || r == '\r' {
+			b.WriteRune(' ')
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 func writeJSON(w http.ResponseWriter, status int, body interface{}) {
