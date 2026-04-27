@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -105,8 +106,13 @@ func (s *Server) renderWizardSnippet(w http.ResponseWriter, res WizardRunResult)
 		klass = "rs-status-error"
 	}
 	data := wizardSnippetData{Class: klass, Message: res.Message}
-	for k, v := range res.Data {
-		data.DataItems = append(data.DataItems, struct{ Key, Val string }{k, toString(v)})
+	keys := make([]string, 0, len(res.Data))
+	for k := range res.Data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		data.DataItems = append(data.DataItems, struct{ Key, Val string }{k, toString(res.Data[k])})
 	}
 	var buf bytes.Buffer
 	if err := wizardSnippetTmpl.Execute(&buf, data); err != nil {
