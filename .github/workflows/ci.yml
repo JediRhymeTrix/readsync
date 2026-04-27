@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.22"
+          go-version: "1.23"
           cache: false
 
       - name: Vet Phase 0 tools (CGO disabled, pure Go)
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: Download dependencies
         run: go mod tidy && go mod download
       - name: Run pure unit tests
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: Install GCC (for go-sqlite3 CGO)
         run: sudo apt-get install -y gcc
       - name: Download dependencies
@@ -80,7 +80,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: Install Windows cross-compile toolchain
         run: sudo apt-get install -y gcc-mingw-w64-x86-64
       - name: Download dependencies
@@ -123,7 +123,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: Download dependencies
         run: go mod tidy && go mod download
       - name: Run Phase 7 unit tests
@@ -151,7 +151,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: Download dependencies
         run: go mod tidy && go mod download
       - name: Run security tests
@@ -166,7 +166,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.22"
+          go-version: "1.23"
       - name: Install GCC
         run: sudo apt-get install -y gcc
       - name: Download dependencies
