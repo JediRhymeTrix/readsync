@@ -8,7 +8,7 @@
 ## 1. Project Summary
 
 **ReadSync** (`github.com/readsync/readsync`) is a Windows background service
-(Go 1.22+) that synchronises reading progress between:
+(Go 1.25+) that synchronises reading progress between:
 
 | App | Protocol | Port |
 |-----|----------|------|
@@ -19,7 +19,7 @@
 
 **No Goodreads API key. No cloud.** Everything runs locally on Windows 10/11.
 
-Module: `github.com/readsync/readsync` | Go: 1.22+ | SQLite via `go-sqlite3` (CGO)
+Module: `github.com/readsync/readsync` | Go: 1.25+ | SQLite via `go-sqlite3` (CGO)
 
 ---
 
@@ -48,7 +48,7 @@ ReadSync/
 │       ├── adapter.go        Adapter / EventEmitter / WriteTarget interfaces
 │       ├── calibre/          calibredb subprocess adapter
 │       │   └── opf/          Pure-Go OPF parser (NO CGO)
-│       ├── koreader/         KOSync HTTP server (Gin v1.10.0)
+│       ├── koreader/         KOSync HTTP server (Gin v1.12.0)
 │       │   └── codec/        Pure-Go wire codec (NO CGO)
 │       ├── moon/             Moon+ WebDAV server + .po parser (NO CGO)
 │       ├── goodreads/        Goodreads bridge (Calibre plugin column only)

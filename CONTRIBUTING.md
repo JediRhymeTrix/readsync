@@ -42,7 +42,7 @@ All contributors must follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Development Setup
 
-**Prerequisites:** Go 1.22+, GCC (Windows: [TDM-GCC](https://jmeubank.github.io/tdm-gcc/)), Node.js 18+ (E2E only).
+**Prerequisites:** Go 1.25+, GCC (Windows: [TDM-GCC](https://jmeubank.github.io/tdm-gcc/)), Node.js 18+ (E2E only).
 
 ```bash
 git clone https://github.com/<your-fork>/readsync.git && cd readsync
@@ -127,7 +127,7 @@ ReadSync follows [Semantic Versioning 2.0.0](https://semver.org/): `MAJOR.MINOR.
 1. Every PR merged to `main` auto-updates a **draft release** via
    [Release Drafter](.github/release-drafter.yml) — no manual changelog editing.
 2. A maintainer reviews the draft, edits if needed, then clicks **Publish**.
-3. Publishing creates a `vX.Y.Z` tag → triggers
+3. Publishing a reviewed draft release creates or uses a `vX.Y.Z` tag → triggers
    [`.github/workflows/release.yml`](.github/workflows/release.yml).
 4. The release workflow cross-compiles Windows binaries and attaches
    `ReadSync-vX.Y.Z-windows-amd64.zip` + `SHA256SUMS.txt` to the release.

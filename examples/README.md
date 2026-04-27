@@ -17,7 +17,7 @@ API, integrate with it programmatically, and test against it.
 
 - ReadSync service running (`http://127.0.0.1:7201/`)
 - For shell examples: `curl` (any modern version)
-- For Go examples: Go 1.22+ and `go mod tidy` from the repo root
+- For Go examples: Go 1.25+ and `go mod tidy` from the repo root
 
 ## Running the admin API examples
 

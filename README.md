@@ -1,9 +1,9 @@
-﻿# ReadSync
+# ReadSync
 
-<!-- LLM-SUMMARY: ReadSync is a self-hosted Windows reading-progress sync service. Go 1.22+, SQLite, KOSync + WebDAV adapters for KOReader and Moon+ Pro, Calibre integration, Goodreads bridge via plugin. No API keys needed. -->
+<!-- LLM-SUMMARY: ReadSync is a self-hosted Windows reading-progress sync service. Go 1.25+, SQLite, KOSync + WebDAV adapters for KOReader and Moon+ Pro, Calibre integration, Goodreads bridge via plugin. No API keys needed. -->
 
 [![CI](https://github.com/JediRhymeTrix/readsync/actions/workflows/ci.yml/badge.svg)](https://github.com/JediRhymeTrix/readsync/actions/workflows/ci.yml)
-[![Go 1.22+](https://img.shields.io/badge/go-1.22%2B-blue)](https://golang.org/)
+[![Go 1.25+](https://img.shields.io/badge/go-1.25%2B-blue)](https://golang.org/)
 [![Platform: Windows 10/11](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/JediRhymeTrix/readsync/releases)
 
 ReadSync is a self-hosted Windows background service that syncs reading progress across KOReader, Moon+ Reader Pro, Calibre, and Goodreads without cloud dependency or Goodreads API key.

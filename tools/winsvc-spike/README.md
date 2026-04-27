@@ -4,7 +4,7 @@ Demonstrates the `kardianos/service` lifecycle for the production ReadSync servi
 
 ## Requirements
 
-- Go 1.22+
+- Go 1.25+
 - Windows (for install/start/stop/uninstall — requires admin)
 - Admin PowerShell for service lifecycle commands
 

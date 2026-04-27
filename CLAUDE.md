@@ -9,7 +9,7 @@ See [AGENTS.md](AGENTS.md) for the full developer reference.
 
 **ReadSync** — `github.com/readsync/readsync`
 Self-hosted Windows reading-progress sync service.
-Go 1.22+, SQLite WAL (CGO), KOSync + WebDAV adapters.
+Go 1.25+, SQLite WAL (CGO), KOSync + WebDAV adapters.
 
 ---
 
