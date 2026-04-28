@@ -4,7 +4,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -163,7 +162,7 @@ func (s *Server) logf(format string, args ...interface{}) {
 		// All string arguments are hex-encoded by sanitizeLogArgs before formatting,
 		// so CR/LF/control characters cannot create forged log entries.
 		msg := fmt.Sprintf(format, sanitizeLogArgs(args)...)
-		log.Print("[kosync] " + msg)
+		log.Print("[kosync] " + sanitizeLog(msg))
 	}
 }
 
@@ -179,9 +178,11 @@ func sanitizeLogArgs(args []interface{}) []interface{} {
 	return out
 }
 
-// sanitizeLog hex-encodes user-controlled strings before logging.
+// sanitizeLog removes line breaks from log data to prevent log-forging.
 func sanitizeLog(s string) string {
-	return hex.EncodeToString([]byte(s))
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	return s
 }
 
 func writeJSON(w http.ResponseWriter, status int, body interface{}) {

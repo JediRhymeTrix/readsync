@@ -67,24 +67,14 @@ func EnableKOReaderEndpoint(configFile string) ActionResult {
 }
 
 func safeConfigFilePath(configFile string) (string, error) {
-	if configFile == "" || filepath.IsAbs(configFile) {
+	if !isSafeSingleComponent(configFile) {
 		return "", errUnsafePath
-	}
-	abs, err := safeChildPath(".", configFile)
-	if err != nil {
-		return "", err
 	}
 	safeRoot, err := safeAbsPath(filepath.Join(os.TempDir(), "readsync-config"))
 	if err != nil {
 		return "", err
 	}
-	candidate := abs
-	if filepath.IsAbs(configFile) {
-		candidate = filepath.Join(safeRoot, filepath.Base(abs))
-	} else {
-		candidate = filepath.Join(safeRoot, configFile)
-	}
-	candidate, err = safeAbsPath(candidate)
+	candidate, err := safeAbsPath(filepath.Join(safeRoot, configFile))
 	if err != nil {
 		return "", err
 	}

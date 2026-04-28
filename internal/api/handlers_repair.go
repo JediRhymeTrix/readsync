@@ -137,7 +137,11 @@ func (s *Server) dispatchRepair(r *http.Request, slug string) repair.ActionResul
 		return repair.WriteMissingIDReport(map[string]any{
 			"note": "missing-ID list not yet wired (Phase 5 helper)"}, "")
 	case "enable_koreader":
-		return repair.EnableKOReaderEndpoint(q.Get("config"))
+		config := strings.TrimSpace(q.Get("config"))
+		if !isSafeUserPathInput(config) {
+			return repair.ActionResult{Action: "enable_koreader_endpoint", OK: false, Message: "invalid config path"}
+		}
+		return repair.EnableKOReaderEndpoint(config)
 	case "rotate_creds":
 		store := defaultSecretsStore
 		if store == nil {
