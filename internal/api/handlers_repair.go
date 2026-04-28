@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/readsync/readsync/internal/repair"
@@ -84,6 +85,20 @@ var defaultSecretsStore secretSetter
 // SetSecretsStore registers the secrets store used by rotate_creds.
 func SetSecretsStore(s secretSetter) { defaultSecretsStore = s }
 
+func isSafeUserPathInput(p string) bool {
+	if p == "" || strings.ContainsAny(p, "\x00\r\n") {
+		return false
+	}
+	if strings.Contains(p, "..") {
+		return false
+	}
+	clean := filepath.Clean(p)
+	if !filepath.IsAbs(clean) {
+		return false
+	}
+	return true
+}
+
 func (s *Server) handleRepairAction(w http.ResponseWriter, r *http.Request) {
 	slug := strings.TrimPrefix(r.URL.Path, "/api/repair/")
 	if slug == "" {
@@ -105,9 +120,17 @@ func (s *Server) dispatchRepair(r *http.Request, slug string) repair.ActionResul
 	case "find_calibredb":
 		return repair.FindCalibredb()
 	case "backup_library":
-		return repair.BackupLibrary(q.Get("library"))
+		library := strings.TrimSpace(q.Get("library"))
+		if !isSafeUserPathInput(library) {
+			return repair.ActionResult{Action: "backup_library", OK: false, Message: "invalid library path"}
+		}
+		return repair.BackupLibrary(library)
 	case "create_columns":
-		return repair.CreateCustomColumns(r.Context(), q.Get("calibredb"), q.Get("library"))
+		library := strings.TrimSpace(q.Get("library"))
+		if !isSafeUserPathInput(library) {
+			return repair.ActionResult{Action: "create_custom_columns", OK: false, Message: "invalid library path"}
+		}
+		return repair.CreateCustomColumns(r.Context(), q.Get("calibredb"), library)
 	case "goodreads_plugin":
 		return repair.OpenGoodreadsPluginInstructions()
 	case "missing_id_report":

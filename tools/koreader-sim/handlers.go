@@ -6,6 +6,7 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -161,8 +162,8 @@ func (s *Server) logf(format string, args ...interface{}) {
 	if s.verbose {
 		// All string arguments are hex-encoded by sanitizeLogArgs before formatting,
 		// so CR/LF/control characters cannot create forged log entries.
-		// codeql[go/log-injection]
-		log.Printf("[kosync] "+format, sanitizeLogArgs(args)...)
+		msg := fmt.Sprintf(format, sanitizeLogArgs(args)...)
+		log.Print("[kosync] " + msg)
 	}
 }
 

@@ -89,9 +89,15 @@ func BackupLibrary(libraryPath string) ActionResult {
 	if libraryPath == "" {
 		return failR("backup_library", "library path is required")
 	}
+	if !isSafeSingleComponent(libraryPath) {
+		return failR("backup_library", "invalid library path")
+	}
 	libraryDir, err := safeExistingDir(libraryPath)
 	if err != nil {
 		return failD("backup_library", "invalid library path", err.Error())
+	}
+	if err := enforceLibraryRoot(libraryDir); err != nil {
+		return failD("backup_library", "library path outside allowed root", err.Error())
 	}
 	src, err := safeChildPath(libraryDir, "metadata.db")
 	if err != nil {
@@ -189,6 +195,26 @@ func CreateCustomColumns(ctx context.Context, calibredbPath, libraryPath string)
 	}
 	return okR("create_custom_columns",
 		fmt.Sprintf("created %d, already-present %d", created, skipped))
+}
+
+func enforceLibraryRoot(path string) error {
+	root := strings.TrimSpace(os.Getenv("READSYNC_LIBRARY_ROOT"))
+	if root == "" {
+		// Backward-compatible default: no additional confinement unless configured.
+		return nil
+	}
+	absRoot, err := safeAbsPath(root)
+	if err != nil {
+		return errUnsafePath
+	}
+	absPath, err := safeAbsPath(path)
+	if err != nil {
+		return err
+	}
+	if !isPathWithin(absRoot, absPath) {
+		return errUnsafePath
+	}
+	return nil
 }
 
 func safeExistingDir(p string) (string, error) {
@@ -299,6 +325,16 @@ func safeAbsPath(p string) (string, error) {
 		return "", err
 	}
 	return abs, nil
+}
+
+func isSafeSingleComponent(p string) bool {
+	if p == "" || filepath.IsAbs(p) {
+		return false
+	}
+	if strings.Contains(p, "/") || strings.Contains(p, "\\") || strings.Contains(p, "..") {
+		return false
+	}
+	return true
 }
 
 func hasUnsafePathComponent(p string) bool {

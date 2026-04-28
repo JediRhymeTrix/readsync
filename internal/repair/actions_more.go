@@ -67,17 +67,34 @@ func EnableKOReaderEndpoint(configFile string) ActionResult {
 }
 
 func safeConfigFilePath(configFile string) (string, error) {
-	if configFile == "" {
+	if configFile == "" || filepath.IsAbs(configFile) {
 		return "", errUnsafePath
 	}
-	abs, err := safeAbsPath(configFile)
+	abs, err := safeChildPath(".", configFile)
 	if err != nil {
 		return "", err
 	}
-	if filepath.Base(abs) == string(filepath.Separator) || filepath.Ext(abs) == "" {
+	safeRoot, err := safeAbsPath(filepath.Join(os.TempDir(), "readsync-config"))
+	if err != nil {
+		return "", err
+	}
+	candidate := abs
+	if filepath.IsAbs(configFile) {
+		candidate = filepath.Join(safeRoot, filepath.Base(abs))
+	} else {
+		candidate = filepath.Join(safeRoot, configFile)
+	}
+	candidate, err = safeAbsPath(candidate)
+	if err != nil {
+		return "", err
+	}
+	if !isPathWithin(safeRoot, candidate) {
+		return "", errUnsafePath
+	}
+	if filepath.Base(candidate) == string(filepath.Separator) || filepath.Ext(candidate) == "" {
 		return "", fmt.Errorf("config path must name a file")
 	}
-	return abs, nil
+	return candidate, nil
 }
 
 func safeExistingOrCreatableDir(dir string) (string, error) {

@@ -7,6 +7,7 @@ package api
 
 import (
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,20 @@ type WizardRunResult struct {
 	Slug    string         `json:"slug"`
 	Message string         `json:"message,omitempty"`
 	Data    map[string]any `json:"data,omitempty"`
+}
+
+func isSafeUserPathInput(p string) bool {
+	if p == "" || strings.ContainsAny(p, "\x00\r\n") {
+		return false
+	}
+	if strings.Contains(p, "..") {
+		return false
+	}
+	clean := filepath.Clean(p)
+	if !filepath.IsAbs(clean) {
+		return false
+	}
+	return true
 }
 
 func (s *Server) runWizardPage(r *http.Request, slug setup.PageSlug) WizardRunResult {
@@ -87,6 +102,10 @@ func (s *Server) runCalibreSetup(r *http.Request, slug setup.PageSlug) WizardRun
 	if library == "" {
 		return WizardRunResult{OK: false, Slug: string(slug),
 			Message: "library path is required"}
+	}
+	if !isSafeUserPathInput(library) {
+		return WizardRunResult{OK: false, Slug: string(slug),
+			Message: "invalid library path"}
 	}
 	if bk := repair.BackupLibrary(library); !bk.OK {
 		return WizardRunResult{OK: false, Slug: string(slug),
