@@ -39,20 +39,38 @@ func WriteMissingIDReport(report any, dir string) ActionResult {
 
 // EnableKOReaderEndpoint flips the local config flag the service watches.
 func EnableKOReaderEndpoint(configFile string) ActionResult {
+	configPath, err := safeConfigFilePath(configFile)
+	if err != nil {
+		return failD("enable_koreader_endpoint", "invalid config path", err.Error())
+	}
 	cfg := map[string]any{}
-	if data, err := os.ReadFile(configFile); err == nil {
+	if data, err := os.ReadFile(configPath); err == nil {
 		_ = json.Unmarshal(data, &cfg)
 	}
 	cfg["koreader_enabled"] = true
 	cfg["koreader_lan_only"] = true
 	data, _ := json.MarshalIndent(cfg, "", "  ")
-	if err := os.MkdirAll(filepath.Dir(configFile), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return failD("enable_koreader_endpoint", "mkdir failed", err.Error())
 	}
-	if err := os.WriteFile(configFile, data, 0o644); err != nil {
+	if err := os.WriteFile(configPath, data, 0o644); err != nil {
 		return failD("enable_koreader_endpoint", "write failed", err.Error())
 	}
 	return okR("enable_koreader_endpoint", "KOReader endpoint enabled (LAN-only)")
+}
+
+func safeConfigFilePath(configFile string) (string, error) {
+	if configFile == "" {
+		return "", errUnsafePath
+	}
+	abs, err := safeAbsPath(configFile)
+	if err != nil {
+		return "", err
+	}
+	if filepath.Base(abs) == string(filepath.Separator) || filepath.Ext(abs) == "" {
+		return "", fmt.Errorf("config path must name a file")
+	}
+	return abs, nil
 }
 
 // RotateAdapterCreds generates a new random credential and writes it

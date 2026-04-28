@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -158,17 +159,25 @@ func (s *Server) authenticate(username, key string) bool {
 
 func (s *Server) logf(format string, args ...interface{}) {
 	if s.verbose {
-		log.Printf("[kosync] "+format, args...)
+		log.Printf("[kosync] "+format, sanitizeLogArgs(args)...)
 	}
 }
 
-// logSanitizer replaces newline and carriage-return characters with their
-// escape sequences so user-controlled strings cannot inject forged log lines.
-var logSanitizer = strings.NewReplacer("\n", `\n`, "\r", `\r`)
+func sanitizeLogArgs(args []interface{}) []interface{} {
+	out := make([]interface{}, len(args))
+	for i, arg := range args {
+		if s, ok := arg.(string); ok {
+			out[i] = sanitizeLog(s)
+			continue
+		}
+		out[i] = arg
+	}
+	return out
+}
 
-// sanitizeLog applies logSanitizer to s.
+// sanitizeLog hex-encodes user-controlled strings before logging.
 func sanitizeLog(s string) string {
-	return logSanitizer.Replace(s)
+	return hex.EncodeToString([]byte(s))
 }
 
 func writeJSON(w http.ResponseWriter, status int, body interface{}) {

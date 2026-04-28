@@ -94,12 +94,12 @@ func TestSanitizeLog(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"normal", "normal"},
-		{"with\nnewline", `with\nnewline`},
-		{"with\rreturn", `with\rreturn`},
-		{"multi\r\nline", `multi\r\nline`},
-		{"/dav/moonreader/book.po", "/dav/moonreader/book.po"},
-		{"user\ninjected\rlog", `user\ninjected\rlog`},
+		{"normal", "6e6f726d616c"},
+		{"with\nnewline", `776974680a6e65776c696e65`},
+		{"with\rreturn", `776974680d72657475726e`},
+		{"multi\r\nline", `6d756c74690d0a6c696e65`},
+		{"/dav/moonreader/book.po", "2f6461762f6d6f6f6e7265616465722f626f6f6b2e706f"},
+		{"user\ninjected\rlog", `757365720a696e6a65637465640d6c6f67`},
 		{"", ""},
 	}
 	for _, tt := range tests {
