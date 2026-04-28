@@ -119,6 +119,20 @@ func TestEnableKOReaderEndpoint_RejectsTraversal(t *testing.T) {
 	}
 }
 
+func TestWriteMissingIDReport_RejectsTraversalDir(t *testing.T) {
+	bad := t.TempDir() + string(filepath.Separator) + ".." + string(filepath.Separator) + "readsync-report-escape"
+	if r := WriteMissingIDReport(map[string]any{"missing": []string{"book1"}}, bad); r.OK {
+		t.Fatalf("WriteMissingIDReport should reject traversal dir: %+v", r)
+	}
+}
+
+func TestExportDiagnostics_RejectsTraversalDir(t *testing.T) {
+	bad := t.TempDir() + string(filepath.Separator) + ".." + string(filepath.Separator) + "readsync-diag-escape"
+	if r := ExportDiagnostics(map[string]any{"version": "1.0.0"}, bad); r.OK {
+		t.Fatalf("ExportDiagnostics should reject traversal dir: %+v", r)
+	}
+}
+
 func TestSafeCalibredbPath_RejectsUnsafeExecutables(t *testing.T) {
 	bad := []string{"cmd.exe", "calibredb.exe --bad", "-calibredb", ".." + string(filepath.Separator) + "calibredb.exe"}
 	for _, p := range bad {

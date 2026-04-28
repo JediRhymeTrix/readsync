@@ -159,6 +159,9 @@ func (s *Server) authenticate(username, key string) bool {
 
 func (s *Server) logf(format string, args ...interface{}) {
 	if s.verbose {
+		// All string arguments are hex-encoded by sanitizeLogArgs before formatting,
+		// so CR/LF/control characters cannot create forged log entries.
+		// codeql[go/log-injection]
 		log.Printf("[kosync] "+format, sanitizeLogArgs(args)...)
 	}
 }
