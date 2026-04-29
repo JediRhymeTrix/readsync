@@ -27,9 +27,11 @@ type Recorder struct {
 	verbose    bool
 }
 
-type safeDiskPath string
+type safeDiskPath struct {
+	v string
+}
 
-func (p safeDiskPath) string() string { return string(p) }
+func (p safeDiskPath) string() string { return p.v }
 
 // NewRecorder creates a Recorder. davRoot is where files are stored on disk.
 func NewRecorder(captureDir, davRoot string, verbose bool) *Recorder {
@@ -250,24 +252,24 @@ func (rec *Recorder) safeDiskPath(urlPath string) (safeDiskPath, error) {
 
 func (rec *Recorder) safeCapturePath(name string) (safeDiskPath, error) {
 	if name == "" || strings.ContainsAny(name, "\x00\r\n/\\") || name == "." || name == ".." {
-		return "", fmt.Errorf("invalid capture name")
+		return safeDiskPath{}, fmt.Errorf("invalid capture name")
 	}
 	absRoot, err := filepath.Abs(rec.captureDir)
 	if err != nil {
-		return "", fmt.Errorf("invalid capture root: %w", err)
+		return safeDiskPath{}, fmt.Errorf("invalid capture root: %w", err)
 	}
 	absPath, err := filepath.Abs(filepath.Join(absRoot, name))
 	if err != nil {
-		return "", fmt.Errorf("invalid capture path: %w", err)
+		return safeDiskPath{}, fmt.Errorf("invalid capture path: %w", err)
 	}
 	if absPath != absRoot && !strings.HasPrefix(absPath, absRoot+string(filepath.Separator)) {
-		return "", fmt.Errorf("capture path escapes root")
+		return safeDiskPath{}, fmt.Errorf("capture path escapes root")
 	}
-	return safeDiskPath(absPath), nil
+	return safeDiskPath{v: absPath}, nil
 }
 
 func (p safeDiskPath) dir() safeDiskPath {
-	return safeDiskPath(filepath.Dir(p.string()))
+	return safeDiskPath{v: filepath.Dir(p.string())}
 }
 
 func mkdirAllSafe(p safeDiskPath, perm os.FileMode) error {
