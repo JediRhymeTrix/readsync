@@ -27,6 +27,10 @@ type Recorder struct {
 	verbose    bool
 }
 
+type safeDiskPath string
+
+func (p safeDiskPath) string() string { return string(p) }
+
 // NewRecorder creates a Recorder. davRoot is where files are stored on disk.
 func NewRecorder(captureDir, davRoot string, verbose bool) *Recorder {
 	return &Recorder{captureDir: captureDir, davRoot: davRoot, verbose: verbose}
@@ -66,7 +70,7 @@ func (rec *Recorder) handleMKCOL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := mkdirAllSafe(dir, 0755); err != nil {
 		log.Printf("[webdav] MKCOL %s error: %v", sanitizeLog(r.URL.Path), err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -84,7 +88,7 @@ func (rec *Recorder) handlePROPFIND(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	info, err := os.Stat(diskPath)
+	info, err := statSafe(diskPath)
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(207) // 207 Multi-Status
@@ -140,8 +144,8 @@ func (rec *Recorder) handlePUT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Write to the DAV root so GET can retrieve it.
-	if err := os.MkdirAll(filepath.Dir(diskPath), 0755); err == nil {
-		_ = os.WriteFile(diskPath, body, 0644)
+	if err := mkdirAllSafe(diskPath.dir(), 0755); err == nil {
+		_ = writeFileSafe(diskPath, body, 0644)
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -154,7 +158,7 @@ func (rec *Recorder) handleGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	data, err := os.ReadFile(diskPath)
+	data, err := readFileSafe(diskPath)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -175,10 +179,14 @@ func (rec *Recorder) saveCapturedPO(urlPath string, body []byte) {
 	}
 	ts := time.Now().UTC().Format("20060102T150405Z")
 	name := strings.TrimSuffix(base, ".po") + "_" + ts + ".po"
-	dst := filepath.Join(rec.captureDir, name)
+	dst, err := rec.safeCapturePath(name)
+	if err != nil {
+		log.Printf("[recorder] skipping capture for unsafe destination %q", sanitizeLog(name))
+		return
+	}
 
-	if err := os.WriteFile(dst, body, 0644); err != nil {
-		log.Printf("[recorder] failed to save %q: %v", sanitizeLog(dst), err)
+	if err := writeFileSafe(dst, body, 0644); err != nil {
+		log.Printf("[recorder] failed to save %q: %v", sanitizeLog(dst.string()), err)
 		return
 	}
 	log.Printf("[recorder] captured %-30s  %d bytes", sanitizeLog(name), len(body))
@@ -190,14 +198,17 @@ func (rec *Recorder) saveCapturedPO(urlPath string, body []byte) {
 // safeDiskPath maps a URL path to an absolute filesystem path under davRoot.
 // It rejects paths that contain ".." components or backslashes, and verifies
 // the resolved path stays within davRoot. Returns an error for invalid paths.
-func (rec *Recorder) safeDiskPath(urlPath string) (string, error) {
+func (rec *Recorder) safeDiskPath(urlPath string) (safeDiskPath, error) {
 	// Reject backslashes (Windows path separator injection via URL).
 	if strings.ContainsRune(urlPath, '\\') {
 		return "", fmt.Errorf("invalid path: backslash not allowed")
 	}
+	if strings.ContainsAny(urlPath, "\x00\r\n") {
+		return "", fmt.Errorf("invalid path: control character not allowed")
+	}
 	// Reject any ".." component to prevent directory traversal.
 	for _, part := range strings.Split(urlPath, "/") {
-		if part == ".." {
+		if part == ".." || part == "." {
 			return "", fmt.Errorf("invalid path: parent traversal not allowed")
 		}
 	}
@@ -219,7 +230,57 @@ func (rec *Recorder) safeDiskPath(urlPath string) (string, error) {
 		return "", fmt.Errorf("path escapes root")
 	}
 
-	return absPath, nil
+	return safeDiskPath(absPath), nil
+}
+
+func (rec *Recorder) safeCapturePath(name string) (safeDiskPath, error) {
+	if name == "" || strings.ContainsAny(name, "\x00\r\n/\\") || name == "." || name == ".." {
+		return "", fmt.Errorf("invalid capture name")
+	}
+	absRoot, err := filepath.Abs(rec.captureDir)
+	if err != nil {
+		return "", fmt.Errorf("invalid capture root: %w", err)
+	}
+	absPath, err := filepath.Abs(filepath.Join(absRoot, name))
+	if err != nil {
+		return "", fmt.Errorf("invalid capture path: %w", err)
+	}
+	if absPath != absRoot && !strings.HasPrefix(absPath, absRoot+string(filepath.Separator)) {
+		return "", fmt.Errorf("capture path escapes root")
+	}
+	return safeDiskPath(absPath), nil
+}
+
+func (p safeDiskPath) dir() safeDiskPath {
+	return safeDiskPath(filepath.Dir(p.string()))
+}
+
+func mkdirAllSafe(p safeDiskPath, perm os.FileMode) error {
+	// safeDiskPath values are only constructed after canonicalization and containment
+	// checks in safeDiskPath or safeCapturePath.
+	// codeql[go/path-injection]
+	return os.MkdirAll(p.string(), perm)
+}
+
+func statSafe(p safeDiskPath) (os.FileInfo, error) {
+	// safeDiskPath values are only constructed after canonicalization and containment
+	// checks in safeDiskPath or safeCapturePath.
+	// codeql[go/path-injection]
+	return os.Stat(p.string())
+}
+
+func writeFileSafe(p safeDiskPath, data []byte, perm os.FileMode) error {
+	// safeDiskPath values are only constructed after canonicalization and containment
+	// checks in safeDiskPath or safeCapturePath.
+	// codeql[go/path-injection]
+	return os.WriteFile(p.string(), data, perm)
+}
+
+func readFileSafe(p safeDiskPath) ([]byte, error) {
+	// safeDiskPath values are only constructed after canonicalization and containment
+	// checks in safeDiskPath or safeCapturePath.
+	// codeql[go/path-injection]
+	return os.ReadFile(p.string())
 }
 
 // sanitizeLog hex-encodes user-controlled strings so logs never contain raw
