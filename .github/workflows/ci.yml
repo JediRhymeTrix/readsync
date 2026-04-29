@@ -36,6 +36,23 @@ jobs:
           (cd tools/generate-fixtures     && go vet ./...)
 
   # ─── Phase 1 main module ──────────────────────────────────────────────────
+  vet:
+    name: Go vet (main module)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+      - name: Install GCC (for go-sqlite3 CGO)
+        run: sudo apt-get install -y gcc
+      - name: Download dependencies
+        run: go mod tidy && go mod download
+      - name: Run go vet
+        env:
+          CGO_ENABLED: "1"
+        run: go vet ./...
+
   unit-tests:
     name: Phase 1 unit tests (no CGO)
     runs-on: ubuntu-latest

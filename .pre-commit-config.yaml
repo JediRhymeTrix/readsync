@@ -27,6 +27,12 @@ repos:
         language: system
         pass_filenames: false
         files: ^(go\.mod|go\.sum|.*\.go)$
+      - id: go-vet
+        name: go vet all packages
+        entry: go vet ./...
+        language: system
+        pass_filenames: false
+        files: ^(cmd|internal|tests|go\.mod|go\.sum)/?
       - id: go-test-unit
         name: go test unit packages
         entry: go test -count=1 -timeout 30s ./internal/resolver/... ./internal/conflicts/... ./internal/logging/...
