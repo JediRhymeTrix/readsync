@@ -158,7 +158,7 @@ func (rec *Recorder) handleGET(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	data, err := readFileSafe(diskPath)
+	data, err := rec.readFileSafe(diskPath)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -196,8 +196,8 @@ func (rec *Recorder) saveCapturedPO(urlPath string, body []byte) {
 }
 
 // safeDiskPath maps a URL path to an absolute filesystem path under davRoot.
-// It rejects paths that contain ".." components or backslashes, and verifies
-// the resolved path stays within davRoot. Returns an error for invalid paths.
+// It rejects traversal and unsafe characters, and verifies the resolved path
+// stays within davRoot. Returns an error for invalid paths.
 func (rec *Recorder) safeDiskPath(urlPath string) (safeDiskPath, error) {
 	// Reject backslashes (Windows path separator injection via URL).
 	if strings.ContainsRune(urlPath, '\\') {
@@ -206,27 +206,42 @@ func (rec *Recorder) safeDiskPath(urlPath string) (safeDiskPath, error) {
 	if strings.ContainsAny(urlPath, "\x00\r\n") {
 		return "", fmt.Errorf("invalid path: control character not allowed")
 	}
-	// Reject any ".." component to prevent directory traversal.
-	for _, part := range strings.Split(urlPath, "/") {
-		if part == ".." || part == "." {
-			return "", fmt.Errorf("invalid path: parent traversal not allowed")
-		}
+
+	// Require URL path to be under the expected /dav namespace.
+	if urlPath != "/dav" && !strings.HasPrefix(urlPath, "/dav/") {
+		return "", fmt.Errorf("invalid path: outside /dav")
 	}
 
-	// Strip /dav prefix and convert URL slashes to OS path separators.
+	// Strip /dav prefix, normalize as URL path, and force relative semantics.
 	rel := strings.TrimPrefix(urlPath, "/dav")
-	relOS := filepath.FromSlash(rel)
-
-	// Compute absolute path and verify it stays under davRoot.
-	absPath, err := filepath.Abs(filepath.Join(rec.davRoot, relOS))
-	if err != nil {
-		return "", fmt.Errorf("invalid path: %w", err)
+	cleanRel := path.Clean(rel)
+	cleanRel = strings.TrimPrefix(cleanRel, "/")
+	if cleanRel == "." {
+		cleanRel = ""
 	}
+	if cleanRel == ".." || strings.HasPrefix(cleanRel, "../") {
+		return "", fmt.Errorf("invalid path: parent traversal not allowed")
+	}
+
+	// Convert URL slashes to OS path separators.
+	relOS := filepath.FromSlash(cleanRel)
+
+	// Compute canonical root and target path.
 	absRoot, err := filepath.Abs(rec.davRoot)
 	if err != nil {
 		return "", fmt.Errorf("invalid root: %w", err)
 	}
-	if absPath != absRoot && !strings.HasPrefix(absPath, absRoot+string(filepath.Separator)) {
+	absPath, err := filepath.Abs(filepath.Join(absRoot, relOS))
+	if err != nil {
+		return "", fmt.Errorf("invalid path: %w", err)
+	}
+
+	// Verify target remains within absRoot.
+	relToRoot, err := filepath.Rel(absRoot, absPath)
+	if err != nil {
+		return "", fmt.Errorf("invalid path: %w", err)
+	}
+	if relToRoot == ".." || strings.HasPrefix(relToRoot, ".."+string(filepath.Separator)) || filepath.IsAbs(relToRoot) {
 		return "", fmt.Errorf("path escapes root")
 	}
 
@@ -276,11 +291,19 @@ func writeFileSafe(p safeDiskPath, data []byte, perm os.FileMode) error {
 	return os.WriteFile(p.string(), data, perm)
 }
 
-func readFileSafe(p safeDiskPath) ([]byte, error) {
-	// safeDiskPath values are only constructed after canonicalization and containment
-	// checks in safeDiskPath or safeCapturePath.
-	// codeql[go/path-injection]
-	return os.ReadFile(p.string())
+func (rec *Recorder) readFileSafe(p safeDiskPath) ([]byte, error) {
+	absRoot, err := filepath.Abs(rec.davRoot)
+	if err != nil {
+		return nil, fmt.Errorf("invalid root: %w", err)
+	}
+	absPath, err := filepath.Abs(p.string())
+	if err != nil {
+		return nil, fmt.Errorf("invalid path: %w", err)
+	}
+	if absPath != absRoot && !strings.HasPrefix(absPath, absRoot+string(filepath.Separator)) {
+		return nil, fmt.Errorf("path escapes root")
+	}
+	return os.ReadFile(absPath)
 }
 
 // sanitizeLog hex-encodes user-controlled strings so logs never contain raw
