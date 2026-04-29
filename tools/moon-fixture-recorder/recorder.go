@@ -203,15 +203,15 @@ func (rec *Recorder) saveCapturedPO(urlPath string, body []byte) {
 func (rec *Recorder) safeDiskPath(urlPath string) (safeDiskPath, error) {
 	// Reject backslashes (Windows path separator injection via URL).
 	if strings.ContainsRune(urlPath, '\\') {
-		return "", fmt.Errorf("invalid path: backslash not allowed")
+		return safeDiskPath{}, fmt.Errorf("invalid path: backslash not allowed")
 	}
 	if strings.ContainsAny(urlPath, "\x00\r\n") {
-		return "", fmt.Errorf("invalid path: control character not allowed")
+		return safeDiskPath{}, fmt.Errorf("invalid path: control character not allowed")
 	}
 
 	// Require URL path to be under the expected /dav namespace.
 	if urlPath != "/dav" && !strings.HasPrefix(urlPath, "/dav/") {
-		return "", fmt.Errorf("invalid path: outside /dav")
+		return safeDiskPath{}, fmt.Errorf("invalid path: outside /dav")
 	}
 
 	// Strip /dav prefix, normalize as URL path, and force relative semantics.
@@ -222,7 +222,7 @@ func (rec *Recorder) safeDiskPath(urlPath string) (safeDiskPath, error) {
 		cleanRel = ""
 	}
 	if cleanRel == ".." || strings.HasPrefix(cleanRel, "../") {
-		return "", fmt.Errorf("invalid path: parent traversal not allowed")
+		return safeDiskPath{}, fmt.Errorf("invalid path: parent traversal not allowed")
 	}
 
 	// Convert URL slashes to OS path separators.
@@ -231,23 +231,23 @@ func (rec *Recorder) safeDiskPath(urlPath string) (safeDiskPath, error) {
 	// Compute canonical root and target path.
 	absRoot, err := filepath.Abs(rec.davRoot)
 	if err != nil {
-		return "", fmt.Errorf("invalid root: %w", err)
+		return safeDiskPath{}, fmt.Errorf("invalid root: %w", err)
 	}
 	absPath, err := filepath.Abs(filepath.Join(absRoot, relOS))
 	if err != nil {
-		return "", fmt.Errorf("invalid path: %w", err)
+		return safeDiskPath{}, fmt.Errorf("invalid path: %w", err)
 	}
 
 	// Verify target remains within absRoot.
 	relToRoot, err := filepath.Rel(absRoot, absPath)
 	if err != nil {
-		return "", fmt.Errorf("invalid path: %w", err)
+		return safeDiskPath{}, fmt.Errorf("invalid path: %w", err)
 	}
 	if relToRoot == ".." || strings.HasPrefix(relToRoot, ".."+string(filepath.Separator)) || filepath.IsAbs(relToRoot) {
-		return "", fmt.Errorf("path escapes root")
+		return safeDiskPath{}, fmt.Errorf("path escapes root")
 	}
 
-	return safeDiskPath(absPath), nil
+	return safeDiskPath{v: absPath}, nil
 }
 
 func (rec *Recorder) safeCapturePath(name string) (safeDiskPath, error) {
