@@ -31,7 +31,7 @@ func TestSafeDiskPath_ValidPaths(t *testing.T) {
 				t.Fatalf("safeDiskPath(%q) unexpected error: %v", tt.urlPath, err)
 			}
 			absRoot, _ := filepath.Abs(davRoot)
-			if got != absRoot && !strings.HasPrefix(got, absRoot+string(filepath.Separator)) {
+			if got.string() != absRoot && !strings.HasPrefix(got.string(), absRoot+string(filepath.Separator)) {
 				t.Errorf("safeDiskPath(%q) = %q escapes davRoot %q", tt.urlPath, got, absRoot)
 			}
 		})
@@ -51,8 +51,11 @@ func TestSafeDiskPath_InvalidPaths(t *testing.T) {
 		{"dotdot in middle", "/dav/moonreader/../../etc/passwd"},
 		{"dotdot only", "/../../../etc"},
 		{"single dotdot", "/dav/.."},
+		{"single dot component", "/dav/."},
 		{"backslash injection", "/dav/moonreader\\..\\evil"},
 		{"dotdot with encoded-like text", "/dav/foo/.."},
+		{"nul byte", "/dav/moonreader/book.po\x00"},
+		{"newline", "/dav/moonreader/book.po\n"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -82,9 +85,33 @@ func TestSafeDiskPath_NoEscape(t *testing.T) {
 			t.Errorf("safeDiskPath(%q) error: %v", p, err)
 			continue
 		}
-		if got != absRoot && !strings.HasPrefix(got, absRoot+string(filepath.Separator)) {
+		if got.string() != absRoot && !strings.HasPrefix(got.string(), absRoot+string(filepath.Separator)) {
 			t.Errorf("safeDiskPath(%q) = %q escapes davRoot %q", p, got, absRoot)
 		}
+	}
+}
+
+func TestSafeCapturePath_RejectsUnsafeNames(t *testing.T) {
+	rec := NewRecorder(t.TempDir(), t.TempDir(), false)
+	for _, name := range []string{"", ".", "..", "../evil.po", `..\\evil.po`, "evil\n.po", "evil\x00.po"} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := rec.safeCapturePath(name); err == nil {
+				t.Fatalf("safeCapturePath(%q) expected error", name)
+			}
+		})
+	}
+}
+
+func TestSafeCapturePath_ValidPathContained(t *testing.T) {
+	captureDir := t.TempDir()
+	rec := NewRecorder(captureDir, t.TempDir(), false)
+	got, err := rec.safeCapturePath("book_20260101T000000Z.po")
+	if err != nil {
+		t.Fatalf("safeCapturePath unexpected error: %v", err)
+	}
+	absCapture, _ := filepath.Abs(captureDir)
+	if got.string() != absCapture && !strings.HasPrefix(got.string(), absCapture+string(filepath.Separator)) {
+		t.Fatalf("safeCapturePath escaped captureDir: %q not under %q", got, absCapture)
 	}
 }
 

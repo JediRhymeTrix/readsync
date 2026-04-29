@@ -1,0 +1,4 @@
+name: ReadSync CodeQL configuration
+
+paths-ignore:
+  - tools/moon-fixture-recorder/**
