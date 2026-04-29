@@ -8,6 +8,7 @@ package main
 
 import (
 	"encoding/hex"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"log"
@@ -97,7 +98,7 @@ func (rec *Recorder) handlePROPFIND(w http.ResponseWriter, r *http.Request) {
 
 	etag := fmt.Sprintf(`"%x-%x"`, info.ModTime().UnixNano(), info.Size())
 	modTime := info.ModTime().UTC().Format(http.TimeFormat)
-	href := r.URL.Path
+	href := r.URL.EscapedPath()
 
 	fmt.Fprintf(w, `<?xml version="1.0" encoding="utf-8"?>
 <D:multistatus xmlns:D="DAV:">
@@ -113,7 +114,8 @@ func (rec *Recorder) handlePROPFIND(w http.ResponseWriter, r *http.Request) {
       <D:status>HTTP/1.1 200 OK</D:status>
     </D:propstat>
   </D:response>
-</D:multistatus>`, href, modTime, etag, info.Size())
+</D:multistatus>
+`, xmlEscape(href), modTime, etag, info.Size())
 }
 
 // PUT — receive a file upload. Captures .po files to captureDir as well.
@@ -220,13 +222,18 @@ func (rec *Recorder) safeDiskPath(urlPath string) (string, error) {
 	return absPath, nil
 }
 
-// logSanitizer replaces newline and carriage-return characters with their
-// escape sequences so user-controlled strings cannot inject forged log lines.
-var logSanitizer = strings.NewReplacer("\n", `\n`, "\r", `\r`)
-
-// sanitizeLog applies logSanitizer to s.
+// sanitizeLog hex-encodes user-controlled strings so logs never contain raw
+// request data, path separators, control characters, or forged log lines.
 func sanitizeLog(s string) string {
-	return logSanitizer.Replace(s)
+	return hex.EncodeToString([]byte(s))
+}
+
+func xmlEscape(s string) string {
+	var b strings.Builder
+	if err := xml.EscapeText(&b, []byte(s)); err != nil {
+		return ""
+	}
+	return b.String()
 }
 
 // sanitizeFilename replaces characters that are not alphanumeric, hyphen,

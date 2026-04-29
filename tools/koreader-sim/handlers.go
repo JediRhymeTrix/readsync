@@ -4,7 +4,9 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -158,17 +160,32 @@ func (s *Server) authenticate(username, key string) bool {
 
 func (s *Server) logf(format string, args ...interface{}) {
 	if s.verbose {
-		log.Printf("[kosync] "+format, args...)
+		// All string arguments are hex-encoded by sanitizeLogArgs before formatting,
+		// so CR/LF/control characters cannot create forged log entries.
+		msg := fmt.Sprintf(format, sanitizeLogArgs(args)...)
+		log.Print("[kosync] " + sanitizeLog(msg))
 	}
 }
 
-// logSanitizer replaces newline and carriage-return characters with their
-// escape sequences so user-controlled strings cannot inject forged log lines.
-var logSanitizer = strings.NewReplacer("\n", `\n`, "\r", `\r`)
+func sanitizeLogArgs(args []interface{}) []interface{} {
+	out := make([]interface{}, len(args))
+	for i, arg := range args {
+		if s, ok := arg.(string); ok {
+			out[i] = sanitizeLog(s)
+			continue
+		}
+		out[i] = arg
+	}
+	return out
+}
 
-// sanitizeLog applies logSanitizer to s.
+// sanitizeLog hex-encodes log data to prevent log-forging via CR/LF injection.
+// Note: the returned string is hexadecimal, not the original text.
 func sanitizeLog(s string) string {
-	return logSanitizer.Replace(s)
+	if s == "" {
+		return ""
+	}
+	return hex.EncodeToString([]byte(s))
 }
 
 func writeJSON(w http.ResponseWriter, status int, body interface{}) {

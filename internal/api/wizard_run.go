@@ -88,6 +88,10 @@ func (s *Server) runCalibreSetup(r *http.Request, slug setup.PageSlug) WizardRun
 		return WizardRunResult{OK: false, Slug: string(slug),
 			Message: "library path is required"}
 	}
+	if !isSafeUserPathInput(library) {
+		return WizardRunResult{OK: false, Slug: string(slug),
+			Message: "invalid library path"}
+	}
 	if bk := repair.BackupLibrary(library); !bk.OK {
 		return WizardRunResult{OK: false, Slug: string(slug),
 			Message: "backup failed: " + bk.Message,

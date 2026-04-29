@@ -3,6 +3,7 @@
 package repair
 
 import (
+	"context"
 	"net"
 	"os"
 	"path/filepath"
@@ -86,6 +87,14 @@ func TestBackupLibrary_EmptyPath(t *testing.T) {
 	}
 }
 
+func TestBackupLibrary_RejectsTraversal(t *testing.T) {
+	dir := t.TempDir()
+	bad := filepath.Join(dir, "..", filepath.Base(dir))
+	if r := BackupLibrary(bad); r.OK {
+		t.Fatalf("BackupLibrary should reject traversal path: %+v", r)
+	}
+}
+
 func TestEnableKOReaderEndpoint(t *testing.T) {
 	dir := t.TempDir()
 	cfg := filepath.Join(dir, "subdir", "config.json")
@@ -99,6 +108,47 @@ func TestEnableKOReaderEndpoint(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "koreader_enabled") {
 		t.Errorf("config missing key: %s", data)
+	}
+}
+
+func TestEnableKOReaderEndpoint_RejectsTraversal(t *testing.T) {
+	dir := t.TempDir()
+	cfg := dir + string(filepath.Separator) + ".." + string(filepath.Separator) + "config.json"
+	if r := EnableKOReaderEndpoint(cfg); r.OK {
+		t.Fatalf("EnableKOReaderEndpoint should reject traversal path: %+v", r)
+	}
+}
+
+func TestWriteMissingIDReport_RejectsTraversalDir(t *testing.T) {
+	bad := t.TempDir() + string(filepath.Separator) + ".." + string(filepath.Separator) + "readsync-report-escape"
+	if r := WriteMissingIDReport(map[string]any{"missing": []string{"book1"}}, bad); r.OK {
+		t.Fatalf("WriteMissingIDReport should reject traversal dir: %+v", r)
+	}
+}
+
+func TestExportDiagnostics_RejectsTraversalDir(t *testing.T) {
+	bad := t.TempDir() + string(filepath.Separator) + ".." + string(filepath.Separator) + "readsync-diag-escape"
+	if r := ExportDiagnostics(map[string]any{"version": "1.0.0"}, bad); r.OK {
+		t.Fatalf("ExportDiagnostics should reject traversal dir: %+v", r)
+	}
+}
+
+func TestSafeCalibredbPath_RejectsUnsafeExecutables(t *testing.T) {
+	bad := []string{"cmd.exe", "calibredb.exe --bad", "-calibredb", ".." + string(filepath.Separator) + "calibredb.exe"}
+	for _, p := range bad {
+		if _, err := safeCalibredbCommand(p); err == nil {
+			t.Fatalf("safeCalibredbCommand(%q) should fail", p)
+		}
+	}
+}
+
+func TestCreateCustomColumns_RejectsUnsafeInputs(t *testing.T) {
+	dir := t.TempDir()
+	if r := CreateCustomColumns(context.Background(), "cmd.exe", dir); r.OK {
+		t.Fatalf("CreateCustomColumns should reject non-calibredb executable: %+v", r)
+	}
+	if r := CreateCustomColumns(context.Background(), "calibredb.exe", filepath.Join(dir, "..", filepath.Base(dir))); r.OK {
+		t.Fatalf("CreateCustomColumns should reject traversal library path: %+v", r)
 	}
 }
 

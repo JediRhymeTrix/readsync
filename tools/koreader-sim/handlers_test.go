@@ -12,11 +12,11 @@ func TestSanitizeLog_KOSim(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"alice", "alice"},
-		{"user\ninjected", `user\ninjected`},
-		{"user\rinjected", `user\rinjected`},
-		{"multi\r\nline", `multi\r\nline`},
-		{"device\nname\rvalue", `device\nname\rvalue`},
+		{"alice", "616c696365"},
+		{"user\ninjected", `757365720a696e6a6563746564`},
+		{"user\rinjected", `757365720d696e6a6563746564`},
+		{"multi\r\nline", `6d756c74690d0a6c696e65`},
+		{"device\nname\rvalue", `6465766963650a6e616d650d76616c7565`},
 		{"", ""},
 	}
 	for _, tt := range tests {
