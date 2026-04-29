@@ -180,6 +180,7 @@ func sanitizeLogArgs(args []interface{}) []interface{} {
 }
 
 // sanitizeLog hex-encodes log data to prevent log-forging via CR/LF injection.
+// Note: the returned string is hexadecimal, not the original text.
 func sanitizeLog(s string) string {
 	if s == "" {
 		return ""
