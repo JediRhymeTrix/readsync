@@ -89,9 +89,6 @@ func BackupLibrary(libraryPath string) ActionResult {
 	if libraryPath == "" {
 		return failR("backup_library", "library path is required")
 	}
-	if !isSafeSingleComponent(libraryPath) {
-		return failR("backup_library", "invalid library path")
-	}
 	libraryDir, err := safeExistingDir(libraryPath)
 	if err != nil {
 		return failD("backup_library", "invalid library path", err.Error())
@@ -325,16 +322,6 @@ func safeAbsPath(p string) (string, error) {
 		return "", err
 	}
 	return abs, nil
-}
-
-func isSafeSingleComponent(p string) bool {
-	if p == "" || filepath.IsAbs(p) {
-		return false
-	}
-	if strings.Contains(p, "/") || strings.Contains(p, "\\") || strings.Contains(p, "..") {
-		return false
-	}
-	return true
 }
 
 func hasUnsafePathComponent(p string) bool {

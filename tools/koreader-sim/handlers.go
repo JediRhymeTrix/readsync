@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -178,11 +179,12 @@ func sanitizeLogArgs(args []interface{}) []interface{} {
 	return out
 }
 
-// sanitizeLog removes line breaks from log data to prevent log-forging.
+// sanitizeLog hex-encodes log data to prevent log-forging via CR/LF injection.
 func sanitizeLog(s string) string {
-	s = strings.ReplaceAll(s, "\n", "")
-	s = strings.ReplaceAll(s, "\r", "")
-	return s
+	if s == "" {
+		return ""
+	}
+	return hex.EncodeToString([]byte(s))
 }
 
 func writeJSON(w http.ResponseWriter, status int, body interface{}) {
