@@ -1,3 +1,3 @@
 module github.com/readsync/tools/moon-fixture-recorder
 
-go 1.22
+go 1.25.0
