@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gin-gonic/gin v1.12.0
-	github.com/kardianos/service v1.2.4
+	github.com/kardianos/service v1.3.0
 	github.com/mattn/go-sqlite3 v1.14.47
 	golang.org/x/crypto v0.53.0
 	golang.org/x/net v0.56.0
